@@ -1,9 +1,14 @@
 import { z } from 'zod'
+import { RoleSchema } from './role'
 
 export const UserSchema = z.object({
-  id: z.string().min(1),
+  uid: z.string().min(1),
+  role: RoleSchema,
   email: z.string().email(),
   name: z.string().optional(),
+  status: z.enum(['active', 'inactive', 'deleted']).optional(),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
 })
 
 export const CreateUserSchema = z.object({
