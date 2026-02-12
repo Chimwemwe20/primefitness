@@ -1,8 +1,17 @@
+// schemas/index.ts
 export { UserSchema, CreateUserSchema } from './user'
 export type { User, CreateUser } from './user'
-
+export { RoleSchema } from './role'
+export type { Role } from './role'
 export { WorkoutPlanSchema, WorkoutExerciseSchema } from './workout-plan'
 export type { WorkoutPlan, WorkoutExercise } from './workout-plan'
-
+export { WorkoutSessionSchema, SessionExerciseSchema } from './workout-session'
+export type { WorkoutSession, SessionExercise } from './workout-session'
+export { ExerciseSchema } from './exercise'
+export type { Exercise } from './exercise'
+export { ProgressEntrySchema } from './progress'
+export type { ProgressEntry } from './progress'
+export { GoalSchema } from './goal'
+export type { Goal } from './goal'
 export { ActivityLogSchema } from './activity-log'
 export type { ActivityLog } from './activity-log'

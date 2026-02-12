@@ -1,44 +1,32 @@
-import { describe, it, expect, vi } from 'vitest'
-import { renderHook } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement } from 'react'
 import { useUsers, useUser, useCreateUser } from './useUsers'
+import * as firestore from 'firebase/firestore'
 
-// Mock the trpc client
-vi.mock('../lib/trpc', () => ({
-  trpc: {
-    user: {
-      list: {
-        useQuery: vi.fn(() => ({
-          data: [
-            { id: 'user-1', email: 'user1@example.com', name: 'User One' },
-            { id: 'user-2', email: 'user2@example.com', name: 'User Two' },
-          ],
-          isLoading: false,
-          error: null,
-        })),
-      },
-      getById: {
-        useQuery: vi.fn(() => ({
-          data: { id: 'user-1', email: 'user1@example.com', name: 'User One' },
-          isLoading: false,
-          error: null,
-        })),
-      },
-      create: {
-        useMutation: vi.fn(() => ({
-          mutate: vi.fn(),
-          mutateAsync: vi.fn().mockResolvedValue({
-            id: 'new-user',
-            email: 'new@example.com',
-            name: 'New User',
-          }),
-          isLoading: false,
-          error: null,
-        })),
-      },
-    },
-  },
+// Mock firebase/firestore
+vi.mock('firebase/firestore', async () => {
+  const actual = await vi.importActual('firebase/firestore')
+  return {
+    ...actual,
+    getDocs: vi.fn(),
+    getDoc: vi.fn(),
+    addDoc: vi.fn(),
+    collection: vi.fn(),
+    doc: vi.fn(),
+    serverTimestamp: vi.fn(),
+  }
+})
+
+// Mock ../lib/activity
+vi.mock('../lib/activity', () => ({
+  logActivity: vi.fn(),
+}))
+
+// Mock ../lib/firebase
+vi.mock('../lib/firebase', () => ({
+  db: {},
 }))
 
 const createWrapper = () => {
@@ -52,38 +40,76 @@ const createWrapper = () => {
 }
 
 describe('useUsers', () => {
-  it('returns user list data', () => {
-    const { result } = renderHook(() => useUsers(), {
-      wrapper: createWrapper(),
-    })
-    expect(result.current.data).toBeDefined()
-    expect(result.current.data?.length).toBe(2)
+  beforeEach(() => {
+    vi.clearAllMocks()
   })
 
-  it('returns loading state', () => {
+  it('returns user list data', async () => {
+    const mockUsers = [
+      { uid: 'user-1', email: 'user1@example.com', name: 'User One' },
+      { uid: 'user-2', email: 'user2@example.com', name: 'User Two' },
+    ]
+
+    vi.mocked(firestore.getDocs).mockResolvedValue({
+      docs: mockUsers.map(user => ({
+        id: user.uid,
+        data: () => user,
+      })),
+    } as unknown)
+
     const { result } = renderHook(() => useUsers(), {
       wrapper: createWrapper(),
     })
-    expect(result.current.isLoading).toBeDefined()
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    expect(result.current.data).toHaveLength(2)
+    expect(result.current.data).toEqual(mockUsers)
   })
 })
 
 describe('useUser', () => {
-  it('returns single user by id', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('returns single user by id', async () => {
+    const mockUser = { uid: 'user-1', email: 'user1@example.com', name: 'User One' }
+
+    vi.mocked(firestore.getDoc).mockResolvedValue({
+      exists: () => true,
+      id: 'user-1',
+      data: () => mockUser,
+    } as unknown)
+
     const { result } = renderHook(() => useUser('user-1'), {
       wrapper: createWrapper(),
     })
-    expect(result.current.data).toBeDefined()
-    expect(result.current.data?.id).toBe('user-1')
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    expect(result.current.data).toEqual(mockUser)
   })
 })
 
 describe('useCreateUser', () => {
-  it('returns mutation function', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('creates user and returns data', async () => {
+    const newUser = { email: 'new@example.com', name: 'New User' }
+    const mockDocRef = { id: 'new-user-id' }
+
+    vi.mocked(firestore.addDoc).mockResolvedValue(mockDocRef as unknown)
+
     const { result } = renderHook(() => useCreateUser(), {
       wrapper: createWrapper(),
     })
-    expect(result.current.mutateAsync).toBeDefined()
-    expect(typeof result.current.mutateAsync).toBe('function')
+
+    await result.current.mutateAsync(newUser)
+
+    expect(firestore.addDoc).toHaveBeenCalled()
+    expect(firestore.collection).toHaveBeenCalled()
   })
 })

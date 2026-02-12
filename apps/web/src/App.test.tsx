@@ -1,8 +1,26 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { App } from './App'
+import { useAuth } from './providers/AuthContext'
+
+// Mock useAuth
+vi.mock('./providers/AuthContext', () => ({
+  AuthProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  useAuth: vi.fn(),
+}))
 
 describe('App', () => {
+  beforeEach(() => {
+    // Default mock return
+    ;(useAuth as unknown).mockReturnValue({
+      user: null,
+      loading: false,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      token: null,
+    })
+  })
+
   it('renders the header with title', () => {
     render(<App />)
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('The Hytel Way')
@@ -56,5 +74,25 @@ describe('App', () => {
     render(<App />)
     expect(screen.getByAltText('Vite logo')).toBeInTheDocument()
     expect(screen.getByAltText('React logo')).toBeInTheDocument()
+  })
+
+  it('shows auth section when signed out', () => {
+    render(<App />)
+    expect(screen.getByText('Sign In with Google')).toBeInTheDocument()
+  })
+
+  it('shows user info when signed in', () => {
+    ;(useAuth as unknown).mockReturnValue({
+      user: { displayName: 'Test User', email: 'test@example.com' },
+      loading: false,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      token: 'mock-token',
+    })
+
+    render(<App />)
+    expect(screen.getByText(/Welcome, Test User/i)).toBeInTheDocument()
+    expect(screen.getByText(/Token: mock-token/i)).toBeInTheDocument()
+    expect(screen.getByText('Sign Out')).toBeInTheDocument()
   })
 })

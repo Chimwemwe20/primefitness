@@ -7,6 +7,7 @@ describe('UserSchema', () => {
       uid: '123',
       email: 'test@example.com',
       role: 'user',
+      token: 'valid-token',
       name: 'Test User',
       status: 'active',
       createdAt: new Date(),
@@ -19,6 +20,7 @@ describe('UserSchema', () => {
     const result = UserSchema.safeParse({
       email: 'test@example.com',
       role: 'user',
+      token: 'valid-token',
     })
     expect(result.success).toBe(false)
   })
@@ -28,6 +30,7 @@ describe('UserSchema', () => {
       uid: '123',
       email: 'invalid-email',
       role: 'user',
+      token: 'valid-token',
     })
     expect(result.success).toBe(false)
   })
@@ -36,7 +39,8 @@ describe('UserSchema', () => {
     const result = UserSchema.safeParse({
       uid: '123',
       email: 'test@example.com',
-      role: 'superadmin',
+      role: 'superadmin', // invalid role
+      token: 'valid-token',
     })
     expect(result.success).toBe(false)
   })
@@ -46,6 +50,7 @@ describe('UserSchema', () => {
       uid: '123',
       email: 'test@example.com',
       role: 'user',
+      token: 'valid-token',
       status: 'deleted',
     })
     expect(result.success).toBe(true)
@@ -56,8 +61,18 @@ describe('UserSchema', () => {
       uid: '123',
       email: 'test@example.com',
       role: 'user',
+      token: 'valid-token',
     })
     expect(result.success).toBe(true)
+  })
+
+  it('rejects missing token', () => {
+    const result = UserSchema.safeParse({
+      uid: '123',
+      email: 'test@example.com',
+      role: 'user',
+    })
+    expect(result.success).toBe(false)
   })
 })
 
