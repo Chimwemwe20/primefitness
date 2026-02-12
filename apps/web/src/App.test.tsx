@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
+import { User } from 'firebase/auth'
 import { App } from './App'
 import { useAuth } from './providers/AuthContext'
 
@@ -9,13 +10,17 @@ vi.mock('./providers/AuthContext', () => ({
   useAuth: vi.fn(),
 }))
 
+const mockUseAuth = vi.mocked(useAuth)
+
 describe('App', () => {
   beforeEach(() => {
     // Default mock return
-    ;(useAuth as unknown).mockReturnValue({
+    mockUseAuth.mockReturnValue({
       user: null,
       loading: false,
       signInWithGoogle: vi.fn(),
+      signInWithEmail: vi.fn(),
+      signUpWithEmail: vi.fn(),
       signOut: vi.fn(),
       token: null,
     })
@@ -82,10 +87,12 @@ describe('App', () => {
   })
 
   it('shows user info when signed in', () => {
-    ;(useAuth as unknown).mockReturnValue({
-      user: { displayName: 'Test User', email: 'test@example.com' },
+    mockUseAuth.mockReturnValue({
+      user: { displayName: 'Test User', email: 'test@example.com' } as User,
       loading: false,
       signInWithGoogle: vi.fn(),
+      signInWithEmail: vi.fn(),
+      signUpWithEmail: vi.fn(),
       signOut: vi.fn(),
       token: 'mock-token',
     })

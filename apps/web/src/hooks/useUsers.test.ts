@@ -4,6 +4,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement } from 'react'
 import { useUsers, useUser, useCreateUser } from './useUsers'
 import * as firestore from 'firebase/firestore'
+import type {
+  QuerySnapshot,
+  DocumentSnapshot,
+  DocumentReference,
+  DocumentData,
+} from 'firebase/firestore'
 
 // Mock firebase/firestore
 vi.mock('firebase/firestore', async () => {
@@ -55,7 +61,7 @@ describe('useUsers', () => {
         id: user.uid,
         data: () => user,
       })),
-    } as unknown)
+    } as unknown as QuerySnapshot<DocumentData>)
 
     const { result } = renderHook(() => useUsers(), {
       wrapper: createWrapper(),
@@ -80,7 +86,7 @@ describe('useUser', () => {
       exists: () => true,
       id: 'user-1',
       data: () => mockUser,
-    } as unknown)
+    } as unknown as DocumentSnapshot<DocumentData>)
 
     const { result } = renderHook(() => useUser('user-1'), {
       wrapper: createWrapper(),
@@ -101,7 +107,9 @@ describe('useCreateUser', () => {
     const newUser = { email: 'new@example.com', name: 'New User' }
     const mockDocRef = { id: 'new-user-id' }
 
-    vi.mocked(firestore.addDoc).mockResolvedValue(mockDocRef as unknown)
+    vi.mocked(firestore.addDoc).mockResolvedValue(
+      mockDocRef as unknown as DocumentReference<DocumentData>
+    )
 
     const { result } = renderHook(() => useCreateUser(), {
       wrapper: createWrapper(),
