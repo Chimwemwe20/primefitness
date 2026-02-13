@@ -39,6 +39,8 @@ export default function AuthPage() {
       return
     }
 
+    // test
+
     setLoading(true)
 
     try {
