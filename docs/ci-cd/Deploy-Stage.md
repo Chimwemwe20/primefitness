@@ -99,7 +99,7 @@ The workflow uses the GitHub Environment `stage`:
 ```yaml
 environment:
   name: stage
-  url: https://stage.example.com
+  url: https://primefitness-92e96.web.app/
 ```
 
 ### Setting Up the Environment
@@ -137,7 +137,7 @@ jobs:
 
     environment:
       name: stage
-      url: https://stage.example.com
+      url: https://primefitness-92e96.web.app/
 
     steps:
       # ... setup steps ...

@@ -55,7 +55,7 @@ jobs:
     environment:
       name: dev
       # TODO: Update with your dev URL
-      url: https://dev.example.com
+      url: https://primefitness-92e96.web.app/
 
     steps:
       - name: Checkout repository
