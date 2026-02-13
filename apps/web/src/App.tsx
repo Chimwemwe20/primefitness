@@ -15,7 +15,7 @@ export function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/auth" element={<Login />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
