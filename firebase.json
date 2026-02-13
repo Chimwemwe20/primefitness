@@ -8,7 +8,7 @@
   "hosting": {
     "public": "apps/web/dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [{ "source": "**", "destination": "apps/web/src/App.tsx" }]
+    "rewrites": [{ "source": "**", "destination": "index.html" }]
   },
   "auth": {
     "service": "identitytoolkit.googleapis.com",
