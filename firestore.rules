@@ -1,0 +1,83 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isCoach() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'coach';
+    }
+    
+    function isAdminOrCoach() {
+      return isAdmin() || isCoach();
+    }
+    
+    function isValidUserId() {
+      return request.resource.data.userId == request.auth.uid;
+    }
+    
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdminOrCoach();
+      allow create: if isOwner(userId) && request.resource.data.uid == userId;
+      allow update: if (isOwner(userId) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'uid']))) || isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    match /workout-plans/{planId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdminOrCoach());
+      allow create: if isAuthenticated() && isValidUserId();
+      allow update, delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+    
+    match /workout-sessions/{sessionId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdminOrCoach());
+      allow create: if isAuthenticated() && isValidUserId();
+      allow update, delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+    
+    match /exercises/{exerciseId} {
+      allow read: if isAuthenticated() && (resource.data.isPublic == true || resource.data.createdBy == request.auth.uid || isAdminOrCoach());
+      allow create: if isAdminOrCoach() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isAuthenticated() && (resource.data.createdBy == request.auth.uid || isAdmin()) && request.resource.data.createdBy == resource.data.createdBy;
+      allow delete: if isAdmin();
+    }
+    
+    match /progress-entries/{entryId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdminOrCoach());
+      allow create: if isAuthenticated() && isValidUserId();
+      allow update, delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+    
+    match /goals/{goalId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdminOrCoach());
+      allow create: if isAuthenticated() && isValidUserId();
+      allow update, delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+    
+    match /activity-logs/{logId} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && isValidUserId();
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+    
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

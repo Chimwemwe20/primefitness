@@ -4,36 +4,75 @@ import { UserSchema, CreateUserSchema } from './user'
 describe('UserSchema', () => {
   it('validates correct user data', () => {
     const result = UserSchema.safeParse({
-      id: '123',
+      uid: '123',
       email: 'test@example.com',
+      role: 'user',
+      token: 'valid-token',
       name: 'Test User',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
     })
     expect(result.success).toBe(true)
   })
 
-  it('rejects missing id', () => {
+  it('rejects missing uid', () => {
     const result = UserSchema.safeParse({
       email: 'test@example.com',
-      name: 'Test User',
+      role: 'user',
+      token: 'valid-token',
     })
     expect(result.success).toBe(false)
   })
 
   it('rejects invalid email', () => {
     const result = UserSchema.safeParse({
-      id: '123',
+      uid: '123',
       email: 'invalid-email',
-      name: 'Test User',
+      role: 'user',
+      token: 'valid-token',
     })
     expect(result.success).toBe(false)
   })
 
-  it('allows optional name', () => {
+  it('rejects invalid role', () => {
     const result = UserSchema.safeParse({
-      id: '123',
+      uid: '123',
       email: 'test@example.com',
+      role: 'superadmin', // invalid role
+      token: 'valid-token',
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('validates status enum', () => {
+    const result = UserSchema.safeParse({
+      uid: '123',
+      email: 'test@example.com',
+      role: 'user',
+      token: 'valid-token',
+      status: 'deleted',
     })
     expect(result.success).toBe(true)
+  })
+
+  it('allows optional name', () => {
+    const result = UserSchema.safeParse({
+      uid: '123',
+      email: 'test@example.com',
+      role: 'user',
+      token: 'valid-token',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects missing token', () => {
+    const result = UserSchema.safeParse({
+      uid: '123',
+      email: 'test@example.com',
+      role: 'user',
+    })
+    expect(result.success).toBe(false)
   })
 })
 

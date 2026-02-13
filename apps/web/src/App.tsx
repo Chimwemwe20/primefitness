@@ -38,10 +38,9 @@
  *    -> Zod schemas define what data looks like (validation spells!)
  *    -> Located in: packages/shared/
  *
- * tRPC + TanStack Query (API Layer)
- *    -> "The messenger system between actors"
- *    -> tRPC: Type-safe communication with backend (no lost messages!)
- *    -> TanStack Query: Smart caching of server data (remembers the script!)
+ * Firebase Authentication
+ *    -> "The bouncers and ID checkers"
+ *    -> Handles user login and security tokens
  *
  * =============================================================================
  */
@@ -65,16 +64,12 @@ import {
 // Assets
 import viteLogo from '/vite.svg'
 import reactLogo from '/react.svg'
+import { AuthProvider, useAuth } from './providers/AuthContext'
 
-/**
- * Main App Component
- *
- * This is the "main stage" of our application. Everything you see
- * in the browser starts here!
- */
-export function App() {
+function AppContent() {
   // React State - like a scoreboard that updates the display automatically
   const [count, setCount] = useState(0)
+  const { user, signInWithGoogle, signOut, token } = useAuth()
 
   return (
     <div className="min-h-screen py-8 px-4">
@@ -93,6 +88,31 @@ export function App() {
         <a href="https://react.dev" target="_blank" rel="noopener noreferrer">
           <img src={reactLogo} className="logo" alt="React logo" />
         </a>
+      </div>
+
+      {/* User Auth Section */}
+      <div className="max-w-4xl mx-auto mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Authentication</CardTitle>
+            <CardDescription>Firebase Authentication status</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {user ? (
+              <div className="text-center">
+                <p className="mb-4">Welcome, {user.displayName || user.email}</p>
+                <div className="text-xs text-muted-foreground break-all mb-4">
+                  Token: {token?.substring(0, 20)}...
+                </div>
+                <Button onClick={() => signOut()}>Sign Out</Button>
+              </div>
+            ) : (
+              <div className="text-center">
+                <Button onClick={() => signInWithGoogle()}>Sign In with Google</Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Main Content Grid */}
@@ -178,12 +198,7 @@ export function App() {
             </div>
             <div className="flex items-start gap-2">
               <div>
-                <strong>tRPC</strong> - Type-safe API layer
-              </div>
-            </div>
-            <div className="flex items-start gap-2">
-              <div>
-                <strong>TanStack Query</strong> - Server state management
+                <strong>Firebase Auth</strong> - Secure user management
               </div>
             </div>
           </CardContent>
@@ -204,9 +219,6 @@ export function App() {
                 <ul className="space-y-1 text-muted-foreground">
                   <li>
                     |-- web/ <span className="text-xs">(this React app)</span>
-                  </li>
-                  <li>
-                    |-- functions/ <span className="text-xs">(tRPC backend)</span>
                   </li>
                 </ul>
               </div>
@@ -243,5 +255,19 @@ export function App() {
         reload in action!
       </p>
     </div>
+  )
+}
+
+/**
+ * Main App Component
+ *
+ * This is the "main stage" of our application. Everything you see
+ * in the browser starts here!
+ */
+export function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   )
 }
