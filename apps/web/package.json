@@ -12,14 +12,16 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@repo/functions": "workspace:*",
     "@repo/shared": "workspace:*",
     "@repo/ui": "workspace:*",
     "@tanstack/react-query": "^5.62.0",
-    "@trpc/client": "^11.0.0-rc.660",
-    "@trpc/react-query": "^11.0.0-rc.660",
+    "@types/js-cookie": "^3.0.6",
+    "firebase": "^12.9.0",
+    "js-cookie": "^3.0.5",
+    "lucide-react": "^0.564.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.13.0"
   },
   "devDependencies": {
     "@repo/config": "workspace:*",

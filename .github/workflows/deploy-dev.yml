@@ -55,7 +55,7 @@ jobs:
     environment:
       name: dev
       # TODO: Update with your dev URL
-      url: https://dev.example.com
+      url: https://primefitness-92e96.web.app/
 
     steps:
       - name: Checkout repository
@@ -78,36 +78,24 @@ jobs:
       - name: Build
         run: pnpm build
         env:
-          # TODO: Update with your dev API URL
-          VITE_API_URL: https://dev-api.example.com
+          VITE_API_URL: https://primefitness-92e96.web.app
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
 
       # ======================================================================
-      # WIF Authentication
+      # Deploy to Firebase (Spark Plan)
       # ======================================================================
-      # Uses secrets configured in GitHub repository settings.
-      # No hardcoded credentials - WIF provides short-lived tokens.
+      # Deploys: Hosting, Firestore Rules, Firestore Indexes
+      # Uses Firebase CI token for authentication
       # ======================================================================
-      - name: Authenticate to Google Cloud
-        id: auth
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SA_EMAIL }}
-
-      # ======================================================================
-      # Deploy to Firebase
-      # ======================================================================
-      # Firebase CLI auto-detects project from .firebaserc or authenticated
-      # service account. No explicit project ID needed.
-      # ======================================================================
-      - name: Deploy to Firebase Hosting
+      - name: Deploy to Firebase
         run: |
           npm install -g firebase-tools
-          firebase deploy --only hosting
-
-      - name: Deploy Firebase Functions
-        run: firebase deploy --only functions
-        continue-on-error: true # Skip if no functions configured
+          firebase deploy --only hosting,firestore:rules,firestore:indexes --token "${{ secrets.FIREBASE_TOKEN }}"
 
       - name: Deployment Summary
         run: |

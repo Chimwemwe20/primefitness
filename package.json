@@ -19,15 +19,18 @@
     "changeset": "changeset",
     "version": "changeset version",
     "release": "changeset publish",
-    "precheck": "pnpm lint && pnpm typecheck && pnpm build && pnpm test"
+    "precheck": "pnpm lint && pnpm typecheck && pnpm build && pnpm test",
+    "setup:admin": "tsx scripts/setup-admin.ts"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",
     "eslint": "^8.57.0",
+    "firebase-admin": "^13.6.1",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.2",
     "prettier": "^3.2.5",
     "syncpack": "^13.0.0",
+    "tsx": "^4.21.0",
     "turbo": "^2.7.5"
   },
   "packageManager": "pnpm@8.15.6",
