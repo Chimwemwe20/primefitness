@@ -8,7 +8,7 @@ describe('UserSchema', () => {
       email: 'test@example.com',
       role: 'user',
       token: 'valid-token',
-      name: 'Test User',
+      fullname: 'Test User',
       status: 'active',
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -56,7 +56,7 @@ describe('UserSchema', () => {
     expect(result.success).toBe(true)
   })
 
-  it('allows optional name', () => {
+  it('allows optional fullname', () => {
     const result = UserSchema.safeParse({
       uid: '123',
       email: 'test@example.com',
@@ -66,11 +66,46 @@ describe('UserSchema', () => {
     expect(result.success).toBe(true)
   })
 
-  it('rejects missing token', () => {
+  it('allows missing token (token is optional)', () => {
     const result = UserSchema.safeParse({
       uid: '123',
       email: 'test@example.com',
       role: 'user',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('validates optional fields', () => {
+    const result = UserSchema.safeParse({
+      uid: '123',
+      email: 'test@example.com',
+      role: 'user',
+      height: 180,
+      weight: 75,
+      age: 30,
+      gender: 'male',
+      phone: '+1234567890',
+      address: '123 Main St',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects invalid gender', () => {
+    const result = UserSchema.safeParse({
+      uid: '123',
+      email: 'test@example.com',
+      role: 'user',
+      gender: 'other', // 'other' is not in the enum
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects negative height', () => {
+    const result = UserSchema.safeParse({
+      uid: '123',
+      email: 'test@example.com',
+      role: 'user',
+      height: -180,
     })
     expect(result.success).toBe(false)
   })
@@ -98,5 +133,27 @@ describe('CreateUserSchema', () => {
       name: 'New User',
     })
     expect(result.success).toBe(false)
+  })
+
+  it('validates with all optional fields', () => {
+    const result = CreateUserSchema.safeParse({
+      email: 'new@example.com',
+      name: 'New User',
+      height: 175,
+      weight: 70,
+      age: 25,
+      gender: 'female',
+      phone: '+1234567890',
+      address: '456 Oak Ave',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('allows "other" gender in CreateUserSchema', () => {
+    const result = CreateUserSchema.safeParse({
+      email: 'new@example.com',
+      gender: 'other',
+    })
+    expect(result.success).toBe(true)
   })
 })
