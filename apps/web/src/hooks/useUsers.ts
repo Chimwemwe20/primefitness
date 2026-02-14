@@ -1,6 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { collection, getDocs, doc, getDoc, addDoc, serverTimestamp } from 'firebase/firestore'
-import { db } from '../lib/firebase'
+import {
+  collection,
+  getDocs,
+  doc,
+  getDoc,
+  addDoc,
+  setDoc,
+  serverTimestamp,
+} from 'firebase/firestore'
+import { db, auth } from '../lib/firebase'
 import type { User, CreateUser } from '@repo/shared/schemas'
 import { logActivity } from '../lib/activity'
 
@@ -31,25 +39,45 @@ export function useCreateUser() {
 
   return useMutation({
     mutationFn: async (userData: CreateUser) => {
-      // In a real app, you might want to use auth.currentUser.uid here
-      // For this boilerplate, we'll assume a system user or let Firestore handle IDs if allow write
-      // However, typically users are created via Auth, and we just create a profile document.
-      // Assuming this is a profile creation or admin creating a user document:
+      const currentUserId = auth.currentUser?.uid || 'system'
 
       const docRef = await addDoc(collection(db, 'users'), {
         ...userData,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        // Default values usually handled by backend or triggers, but setting here for Spark compatibility
         role: 'user',
         status: 'active',
       })
 
-      // Log the activity
-      // Using a placeholder userId since we might not have auth context in this hook yet
-      await logActivity('system', 'create', 'user', docRef.id, { email: userData.email })
+      // Log the activity with the current user who performed the action
+      await logActivity(currentUserId, 'create', 'user', docRef.id, {
+        email: userData.email,
+        createdBy: currentUserId,
+      })
 
       return { uid: docRef.id, ...userData }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+    },
+  })
+}
+
+export function useUpdateUser() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ uid, data }: { uid: string; data: Partial<User> }) => {
+      const currentUserId = auth.currentUser?.uid || 'system'
+      const userRef = doc(db, 'users', uid)
+
+      await setDoc(userRef, { ...data, updatedAt: serverTimestamp() }, { merge: true })
+
+      // Log activity with the user who made the change
+      await logActivity(currentUserId, 'update', 'user', uid, {
+        updates: data,
+        updatedBy: currentUserId,
+      })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })

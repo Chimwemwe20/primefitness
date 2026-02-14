@@ -4,7 +4,7 @@ import { RoleSchema } from './role'
 export const UserSchema = z.object({
   uid: z.string().min(1),
   role: RoleSchema,
-  token: z.string().min(1),
+  token: z.string().min(1).optional(), // Token is managed in memory/cookies, not stored in Firestore
   email: z.string().email(),
   fullname: z.string().optional(),
   username: z.string().optional(),

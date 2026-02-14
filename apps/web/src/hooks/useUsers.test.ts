@@ -33,6 +33,11 @@ vi.mock('../lib/activity', () => ({
 // Mock ../lib/firebase
 vi.mock('../lib/firebase', () => ({
   db: {},
+  auth: {
+    currentUser: {
+      uid: 'test-user-id',
+    },
+  },
 }))
 
 const createWrapper = () => {
