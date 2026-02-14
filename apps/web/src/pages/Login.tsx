@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '../../../../packages/ui/components/ui/button'
 import { Card } from '../../../../packages/ui/components/ui/card'
 import { Input } from '../../../../packages/ui/components/ui/input'
@@ -9,9 +10,14 @@ import {
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
 } from 'firebase/auth'
-import { auth } from '../lib/firebase'
+import { doc, setDoc, Timestamp } from 'firebase/firestore'
+import { auth, db } from '../lib/firebase'
+import { useAuth } from '../providers/AuthContext'
+import { useEffect } from 'react'
 
 export default function AuthPage() {
+  const navigate = useNavigate()
+  const { user, loading: authLoading } = useAuth()
   const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -19,6 +25,12 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [resetEmailSent, setResetEmailSent] = useState(false)
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate('/app')
+    }
+  }, [user, authLoading, navigate])
 
   const handleEmailAuth = async () => {
     setError('')
@@ -45,12 +57,23 @@ export default function AuthPage() {
 
     try {
       if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, email, password)
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+        const user = userCredential.user
+
+        await setDoc(doc(db, 'users', user.uid), {
+          uid: user.uid,
+          email: user.email,
+          role: 'user',
+          status: 'active',
+          isActive: true,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+        })
       } else {
         await signInWithEmailAndPassword(auth, email, password)
       }
 
-      window.location.href = '/dashboard'
+      navigate('/app')
     } catch (err) {
       console.error('Auth error:', err)
 
@@ -85,7 +108,7 @@ export default function AuthPage() {
       const provider = new GoogleAuthProvider()
       await signInWithPopup(auth, provider)
 
-      window.location.href = '/dashboard'
+      navigate('/app')
     } catch (err) {
       console.error('Google auth error:', err)
 
