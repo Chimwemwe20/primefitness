@@ -38,6 +38,13 @@ function planToLogExercises(plan: WorkoutPlan & { id: string }): WorkoutExercise
   })
 }
 
+/** Strip undefined fields that Firestore rejects */
+const cleanExercises = (exs: WorkoutExercise[]) =>
+  exs.map(({ exerciseId, ...rest }) => ({
+    ...rest,
+    ...(exerciseId !== undefined && { exerciseId }),
+  }))
+
 export default function LogWorkout() {
   const [searchParams] = useSearchParams()
   const templateId = searchParams.get('templateId')
@@ -118,14 +125,17 @@ export default function LogWorkout() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  const startWorkout = async () => {
+  const startWorkout = async (exercisesToSave?: WorkoutExercise[]) => {
+    if (sessionId) return // prevent duplicate sessions
+
     const now = new Date()
     setStartTime(now)
     setElapsedTime(0)
     setIsTimerRunning(true)
+
     const newSession = await createSession.mutateAsync({
       title: workoutTitle,
-      exercises: workoutExercises,
+      exercises: cleanExercises(exercisesToSave ?? workoutExercises),
       startTime: now,
       notes: '',
     })
@@ -133,19 +143,20 @@ export default function LogWorkout() {
   }
 
   const addExercise = (exerciseName: string, exerciseId?: string) => {
-    setWorkoutExercises([
+    const updated = [
       ...workoutExercises,
       {
         exerciseId,
         name: exerciseName,
         sets: [{ reps: 0, weight: 0, completed: false }],
       },
-    ])
+    ]
+    setWorkoutExercises(updated)
     setShowExercisePicker(false)
     setSearchQuery('')
 
-    if (!isTimerRunning) {
-      startWorkout()
+    if (!isTimerRunning && !sessionId) {
+      startWorkout(updated)
     }
   }
 
@@ -200,7 +211,7 @@ export default function LogWorkout() {
     await updateSession.mutateAsync({
       id: sessionId,
       data: {
-        exercises: workoutExercises,
+        exercises: cleanExercises(workoutExercises),
         endTime,
         duration,
         completedAt: endTime,
@@ -273,7 +284,7 @@ export default function LogWorkout() {
             Tap start when you're ready — the timer will begin
           </p>
           <Button
-            onClick={startWorkout}
+            onClick={() => startWorkout()}
             className="bg-blue-500 hover:bg-blue-600 text-white text-lg px-8 py-3 h-auto"
           >
             <Play size={22} className="mr-2" />

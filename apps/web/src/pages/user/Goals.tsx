@@ -272,8 +272,8 @@ export default function Goals() {
         </Card>
       )}
 
-      {/* Add Goal Modal */}
-      {showAddModal && <AddGoalModal onClose={() => setShowAddModal(false)} />}
+      {/* Add Goal Dialog */}
+      <AddGoalDialog open={showAddModal} onOpenChange={setShowAddModal} />
 
       {/* Delete Confirmation Dialog */}
       <Dialog
@@ -290,7 +290,13 @@ export default function Goals() {
   )
 }
 
-function AddGoalModal({ onClose }: { onClose: () => void }) {
+function AddGoalDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
   const createGoal = useCreateGoal()
   const toast = useToast()
 
@@ -303,6 +309,18 @@ function AddGoalModal({ onClose }: { onClose: () => void }) {
     unit: '',
     targetDate: '',
   })
+
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      description: '',
+      type: 'other',
+      targetValue: '',
+      currentValue: '',
+      unit: '',
+      targetDate: '',
+    })
+  }
 
   const handleSubmit = async () => {
     if (!formData.title) return
@@ -320,124 +338,133 @@ function AddGoalModal({ onClose }: { onClose: () => void }) {
         startDate: new Date(),
       })
       toast.success('Goal created successfully!')
-      onClose()
+      resetForm()
+      onOpenChange(false)
     } catch (error) {
       toast.error('Failed to create goal')
     }
   }
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <Card className="bg-neutral-900 border-neutral-800 p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Create New Goal</h2>
-          <button onClick={onClose} className="p-2 hover:bg-neutral-800 rounded-lg">
-            <X size={20} />
-          </button>
+    <Dialog
+      open={open}
+      onOpenChange={isOpen => {
+        if (!isOpen) resetForm()
+        onOpenChange(isOpen)
+      }}
+      title="Create New Goal"
+      description="Set a new fitness objective to track your progress."
+      size="lg"
+    >
+      <div className="space-y-5">
+        <div>
+          <label className="block text-sm font-medium text-neutral-400 mb-2">Goal Title *</label>
+          <Input
+            value={formData.title}
+            onChange={e => setFormData({ ...formData, title: e.target.value })}
+            className="bg-neutral-800 border-neutral-700"
+            placeholder="e.g., Reach 75kg"
+          />
         </div>
 
-        <div className="space-y-6">
+        <div>
+          <label className="block text-sm font-medium text-neutral-400 mb-2">Description</label>
+          <textarea
+            value={formData.description}
+            onChange={e => setFormData({ ...formData, description: e.target.value })}
+            className="w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-colors"
+            rows={3}
+            placeholder="What do you want to achieve?"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-neutral-400 mb-2">Category</label>
+          <select
+            value={formData.type}
+            onChange={e => setFormData({ ...formData, type: e.target.value as Goal['type'] })}
+            className="w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-colors"
+          >
+            <option value="weight">Weight Goal</option>
+            <option value="strength">Strength Goal</option>
+            <option value="habit">Habit Goal</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div className="grid sm:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-neutral-400 mb-2">Goal Title *</label>
+            <label className="block text-sm font-medium text-neutral-400 mb-2">Current Value</label>
             <Input
-              value={formData.title}
-              onChange={e => setFormData({ ...formData, title: e.target.value })}
+              type="number"
+              step="0.1"
+              value={formData.currentValue}
+              onChange={e => setFormData({ ...formData, currentValue: e.target.value })}
               className="bg-neutral-800 border-neutral-700"
-              placeholder="e.g., Reach 75kg"
+              placeholder="85"
             />
           </div>
-
           <div>
-            <label className="block text-sm font-medium text-neutral-400 mb-2">Description</label>
-            <textarea
-              value={formData.description}
-              onChange={e => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-100 resize-none"
-              rows={3}
-              placeholder="What do you want to achieve?"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-neutral-400 mb-2">Category</label>
-            <select
-              value={formData.type}
-              onChange={e => setFormData({ ...formData, type: e.target.value as Goal['type'] })}
-              className="w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-100"
-            >
-              <option value="weight">Weight Goal</option>
-              <option value="strength">Strength Goal</option>
-              <option value="habit">Habit Goal</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-
-          <div className="grid sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-neutral-400 mb-2">
-                Current Value
-              </label>
-              <Input
-                type="number"
-                step="0.1"
-                value={formData.currentValue}
-                onChange={e => setFormData({ ...formData, currentValue: e.target.value })}
-                className="bg-neutral-800 border-neutral-700"
-                placeholder="85"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-neutral-400 mb-2">
-                Target Value
-              </label>
-              <Input
-                type="number"
-                step="0.1"
-                value={formData.targetValue}
-                onChange={e => setFormData({ ...formData, targetValue: e.target.value })}
-                className="bg-neutral-800 border-neutral-700"
-                placeholder="100"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-neutral-400 mb-2">Unit</label>
-              <Input
-                value={formData.unit}
-                onChange={e => setFormData({ ...formData, unit: e.target.value })}
-                className="bg-neutral-800 border-neutral-700"
-                placeholder="kg"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-neutral-400 mb-2">
-              Target Deadline
-            </label>
+            <label className="block text-sm font-medium text-neutral-400 mb-2">Target Value</label>
             <Input
-              type="date"
-              value={formData.targetDate}
-              onChange={e => setFormData({ ...formData, targetDate: e.target.value })}
+              type="number"
+              step="0.1"
+              value={formData.targetValue}
+              onChange={e => setFormData({ ...formData, targetValue: e.target.value })}
               className="bg-neutral-800 border-neutral-700"
+              placeholder="100"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-2">Unit</label>
+            <Input
+              value={formData.unit}
+              onChange={e => setFormData({ ...formData, unit: e.target.value })}
+              className="bg-neutral-800 border-neutral-700"
+              placeholder="kg"
+            />
+          </div>
+        </div>
 
+        <div>
+          <label className="block text-sm font-medium text-neutral-400 mb-2">Target Deadline</label>
+          <Input
+            type="date"
+            value={formData.targetDate}
+            onChange={e => setFormData({ ...formData, targetDate: e.target.value })}
+            className="bg-neutral-800 border-neutral-700"
+          />
+        </div>
+
+        {/* Actions */}
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5 pt-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              resetForm()
+              onOpenChange(false)
+            }}
+            disabled={createGoal.isPending}
+            className="border-neutral-700/80 text-neutral-300 bg-transparent hover:bg-white/[0.04] hover:text-neutral-100 hover:border-neutral-600 transition-all duration-150"
+          >
+            Cancel
+          </Button>
           <Button
             onClick={handleSubmit}
-            className="w-full bg-blue-500 hover:bg-blue-600"
+            className="bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-900/30 font-medium transition-all duration-150"
             disabled={!formData.title || createGoal.isPending}
           >
             {createGoal.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Creating…
+              </span>
             ) : (
               'Create Goal'
             )}
           </Button>
         </div>
-      </Card>
-    </div>
+      </div>
+    </Dialog>
   )
 }

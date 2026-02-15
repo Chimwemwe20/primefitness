@@ -3,11 +3,11 @@ import { useAuth } from '../../providers/AuthContext'
 import { Card } from '@repo/ui/Card'
 import { Button } from '@repo/ui/Button'
 import { User, LogOut } from 'lucide-react'
-import ProfileModal from './ProfileModal'
+import ProfileDialog from './ProfileDialog.tsx'
 
 export default function UserSettings() {
   const { profile, signOut } = useAuth()
-  const [showProfileModal, setShowProfileModal] = useState(false)
+  const [showProfileDialog, setShowProfileDialog] = useState(false)
 
   return (
     <div className="max-w-xl mx-auto">
@@ -46,7 +46,7 @@ export default function UserSettings() {
           </p>
         )}
         <Button
-          onClick={() => setShowProfileModal(true)}
+          onClick={() => setShowProfileDialog(true)}
           variant="outline"
           className="w-full sm:w-auto border-neutral-700 text-neutral-200 hover:bg-neutral-800"
         >
@@ -65,7 +65,7 @@ export default function UserSettings() {
         </Button>
       </Card>
 
-      {showProfileModal && <ProfileModal onClose={() => setShowProfileModal(false)} />}
+      <ProfileDialog open={showProfileDialog} onOpenChange={setShowProfileDialog} />
     </div>
   )
 }
