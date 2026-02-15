@@ -3,20 +3,37 @@ import { useWorkoutSessions, useDeleteWorkoutSession } from '../../hooks/useWork
 import { Card } from '@repo/ui/Card'
 import { Button } from '@repo/ui/Button'
 import { Input } from '@repo/ui/Input'
+import { Dialog } from '@repo/ui/Dialog'
+import { useToast } from '@repo/ui/useToast'
 import { Loader2, Dumbbell, Search, Trash2, Calendar, Clock, Award } from 'lucide-react'
 
 export default function WorkoutHistory() {
   const { data: sessions, isLoading } = useWorkoutSessions()
   const deleteSession = useDeleteWorkoutSession()
+  const toast = useToast()
   const [searchQuery, setSearchQuery] = useState('')
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [sessionToDelete, setSessionToDelete] = useState<string | null>(null)
 
   const filteredSessions = sessions?.filter(session =>
     session.title.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this workout?')) {
-      await deleteSession.mutateAsync(id)
+  const handleDeleteClick = (id: string) => {
+    setSessionToDelete(id)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!sessionToDelete) return
+    try {
+      await deleteSession.mutateAsync(sessionToDelete)
+      toast.success('Workout deleted successfully!')
+    } catch (error) {
+      console.error('Failed to delete workout:', error)
+      toast.error('Failed to delete workout. Please try again.')
+    } finally {
+      setSessionToDelete(null)
     }
   }
 
@@ -99,7 +116,7 @@ export default function WorkoutHistory() {
                   size="sm"
                   onClick={e => {
                     e.stopPropagation()
-                    handleDelete(session.id!)
+                    handleDeleteClick(session.id!)
                   }}
                   className="border-neutral-700 text-red-500 hover:text-red-400"
                 >
@@ -122,6 +139,18 @@ export default function WorkoutHistory() {
           </Button>
         </Card>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Workout"
+        description="Are you sure you want to delete this workout? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleDeleteConfirm}
+        variant="destructive"
+      />
     </div>
   )
 }

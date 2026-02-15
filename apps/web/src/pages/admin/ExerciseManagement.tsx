@@ -8,6 +8,8 @@ import {
 import { Card } from '@repo/ui/Card'
 import { Button } from '@repo/ui/Button'
 import { Input } from '@repo/ui/Input'
+import { Dialog } from '@repo/ui/Dialog'
+import { useToast } from '@repo/ui/useToast'
 import {
   Plus,
   Search,
@@ -30,6 +32,7 @@ export default function ExerciseManagement() {
   const createExercise = useCreateExercise()
   const updateExercise = useUpdateExercise()
   const deleteExercise = useDeleteExercise()
+  const toast = useToast()
 
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
@@ -41,6 +44,8 @@ export default function ExerciseManagement() {
   const [editingExercise, setEditingExercise] = useState<(Exercise & { id: string }) | null>(null)
   const [isSeeding, setIsSeeding] = useState(false)
   const hasAutoSeededRef = useRef(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [exerciseToDelete, setExerciseToDelete] = useState<string | null>(null)
 
   // Form State
   const initialFormState: Partial<Exercise> = {
@@ -81,25 +86,39 @@ export default function ExerciseManagement() {
           id: editingExercise.id,
           data: formData,
         })
+        toast.success('Exercise updated successfully!')
       } else {
         await createExercise.mutateAsync(formData as Omit<Exercise, 'id'>)
+        toast.success('Exercise created successfully!')
       }
       handleCloseModal()
     } catch (error) {
       console.error('Failed to save exercise:', error)
-      alert('Failed to save exercise')
+      toast.error('Failed to save exercise. Please try again.')
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this exercise?')) {
-      await deleteExercise.mutateAsync(id)
+  const handleDeleteClick = (id: string) => {
+    setExerciseToDelete(id)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!exerciseToDelete) return
+    try {
+      await deleteExercise.mutateAsync(exerciseToDelete)
+      toast.success('Exercise deleted successfully!')
+    } catch (error) {
+      console.error('Failed to delete exercise:', error)
+      toast.error('Failed to delete exercise. Please try again.')
+    } finally {
+      setExerciseToDelete(null)
     }
   }
 
   const runSeedDefaults = async (options: { silent?: boolean } = {}) => {
     if (!auth.currentUser?.uid) {
-      if (!options.silent) alert('You must be logged in to seed default exercises.')
+      if (!options.silent) toast.error('You must be logged in to seed default exercises.')
       return
     }
     setIsSeeding(true)
@@ -116,17 +135,17 @@ export default function ExerciseManagement() {
       }
       if (!options.silent) {
         if (added > 0) {
-          alert(
+          toast.success(
             `Added ${added} default exercise${added === 1 ? '' : 's'}.${failed > 0 ? ` ${failed} skipped (may already exist).` : ''}`
           )
         }
         if (failed === DEFAULT_EXERCISES.length) {
-          alert('No exercises were added. They may already exist in the library.')
+          toast.info('No exercises were added. They may already exist in the library.')
         }
       }
     } catch (error) {
       console.error('Seed defaults failed:', error)
-      if (!options.silent) alert('Failed to seed default exercises.')
+      if (!options.silent) toast.error('Failed to seed default exercises.')
     } finally {
       setIsSeeding(false)
     }
@@ -332,7 +351,7 @@ export default function ExerciseManagement() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDelete(exercise.id)}
+                      onClick={() => handleDeleteClick(exercise.id)}
                       className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-400"
                     >
                       <Trash2 size={14} />
@@ -623,6 +642,18 @@ export default function ExerciseManagement() {
             </Card>
           </div>
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          title="Delete Exercise"
+          description="Are you sure you want to delete this exercise? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          onConfirm={handleDeleteConfirm}
+          variant="destructive"
+        />
       </div>
     </div>
   )

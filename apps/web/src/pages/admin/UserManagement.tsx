@@ -3,6 +3,8 @@ import { useUsers, useUpdateUser } from '../../hooks/useUsers'
 import { Card } from '@repo/ui/Card'
 import { Button } from '@repo/ui/Button'
 import { Input } from '@repo/ui/Input'
+import { Dialog } from '@repo/ui/Dialog'
+import { useToast } from '@repo/ui/useToast'
 import {
   Loader2,
   Shield,
@@ -16,15 +18,36 @@ import {
 export default function UserManagement() {
   const { data: users, isLoading } = useUsers()
   const updateUser = useUpdateUser()
+  const toast = useToast()
 
   const [searchQuery, setSearchQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'user'>('all')
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
+  const [roleChangeDialogOpen, setRoleChangeDialogOpen] = useState(false)
+  const [pendingRoleChange, setPendingRoleChange] = useState<{
+    uid: string
+    newRole: 'admin' | 'user'
+  } | null>(null)
 
-  const handleRoleChange = async (uid: string, newRole: 'admin' | 'user') => {
-    if (confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
-      await updateUser.mutateAsync({ uid, data: { role: newRole } })
+  const handleRoleChangeClick = (uid: string, newRole: 'admin' | 'user') => {
+    setPendingRoleChange({ uid, newRole })
+    setRoleChangeDialogOpen(true)
+  }
+
+  const handleRoleChangeConfirm = async () => {
+    if (!pendingRoleChange) return
+    try {
+      await updateUser.mutateAsync({
+        uid: pendingRoleChange.uid,
+        data: { role: pendingRoleChange.newRole },
+      })
+      toast.success(`User role changed to ${pendingRoleChange.newRole} successfully!`)
+    } catch (error) {
+      console.error('Failed to update user role:', error)
+      toast.error('Failed to update user role. Please try again.')
+    } finally {
+      setPendingRoleChange(null)
     }
   }
 
@@ -182,7 +205,7 @@ export default function UserManagement() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleRoleChange(user.uid, 'admin')}
+                                onClick={() => handleRoleChangeClick(user.uid, 'admin')}
                                 className="h-8 text-xs border-neutral-700 hover:border-red-500/50 hover:text-red-400"
                               >
                                 <Shield size={14} className="mr-1" />
@@ -193,7 +216,7 @@ export default function UserManagement() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleRoleChange(user.uid, 'user')}
+                                onClick={() => handleRoleChangeClick(user.uid, 'user')}
                                 className="h-8 text-xs border-neutral-700 hover:border-blue-500/50 hover:text-blue-400"
                               >
                                 <UserIcon size={14} className="mr-1" />
@@ -251,7 +274,7 @@ export default function UserManagement() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleRoleChange(user.uid, 'admin')}
+                      onClick={() => handleRoleChangeClick(user.uid, 'admin')}
                       className="flex-1 h-9 text-xs border-neutral-700 hover:border-red-500/50 hover:text-red-400"
                     >
                       <Shield size={14} className="mr-1" />
@@ -262,7 +285,7 @@ export default function UserManagement() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleRoleChange(user.uid, 'user')}
+                      onClick={() => handleRoleChangeClick(user.uid, 'user')}
                       className="flex-1 h-9 text-xs border-neutral-700 hover:border-blue-500/50 hover:text-blue-400"
                     >
                       <UserIcon size={14} className="mr-1" />
@@ -311,6 +334,18 @@ export default function UserManagement() {
             </div>
           </div>
         )}
+
+        {/* Role Change Confirmation Dialog */}
+        <Dialog
+          open={roleChangeDialogOpen}
+          onOpenChange={setRoleChangeDialogOpen}
+          title="Change User Role"
+          description={`Are you sure you want to change this user's role to ${pendingRoleChange?.newRole}? This will affect their permissions and access.`}
+          confirmText="Change Role"
+          cancelText="Cancel"
+          onConfirm={handleRoleChangeConfirm}
+          variant="default"
+        />
       </div>
     </div>
   )

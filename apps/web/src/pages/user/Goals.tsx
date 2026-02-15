@@ -3,6 +3,7 @@ import { useProgressEntries, useCreateProgressEntry } from '../../hooks/useProgr
 import { Button } from '@repo/ui/Button'
 import { Card } from '@repo/ui/Card'
 import { Input } from '@repo/ui/Input'
+import { useToast } from '@repo/ui/useToast'
 import { Loader2, TrendingUp, TrendingDown, Plus, X, Scale, Activity, Calendar } from 'lucide-react'
 import {
   LineChart,
@@ -221,6 +222,7 @@ export default function Progress() {
 
 function AddProgressModal({ onClose }: { onClose: () => void }) {
   const createEntryMutation = useCreateProgressEntry()
+  const toast = useToast()
   const [formData, setFormData] = useState({
     weight: '',
     bodyFat: '',
@@ -247,10 +249,11 @@ function AddProgressModal({ onClose }: { onClose: () => void }) {
         },
         notes: formData.notes || undefined,
       })
+      toast.success('Progress entry saved successfully!')
       onClose()
     } catch (error) {
       console.error('Failed to create progress entry:', error)
-      alert('Failed to save progress entry')
+      toast.error('Failed to save progress entry. Please try again.')
     }
   }
 

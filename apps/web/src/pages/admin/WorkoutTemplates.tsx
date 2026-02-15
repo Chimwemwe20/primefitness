@@ -9,6 +9,8 @@ import { useExercises } from '../../hooks/useExercises'
 import { Card } from '@repo/ui/Card'
 import { Button } from '@repo/ui/Button'
 import { Input } from '@repo/ui/Input'
+import { Dialog } from '@repo/ui/Dialog'
+import { useToast } from '@repo/ui/useToast'
 import {
   Plus,
   Search,
@@ -35,6 +37,7 @@ export default function WorkoutTemplates() {
   const createTemplate = useCreateTemplate()
   const updateTemplate = useUpdateTemplate()
   const deleteTemplate = useDeleteTemplate()
+  const toast = useToast()
 
   const [searchQuery, setSearchQuery] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
@@ -57,6 +60,9 @@ export default function WorkoutTemplates() {
   const [expandedTemplate, setExpandedTemplate] = useState<string | null>(null)
   const [isSeeding, setIsSeeding] = useState(false)
   const hasAutoSeededRef = useRef(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [templateToDelete, setTemplateToDelete] = useState<string | null>(null)
+  const [seedConfirmOpen, setSeedConfirmOpen] = useState(false)
 
   const handleOpenModal = (template?: WorkoutPlan & { id: string }) => {
     if (template) {
@@ -80,7 +86,7 @@ export default function WorkoutTemplates() {
     e.preventDefault()
 
     if (!formData.title) {
-      alert('Title is required')
+      toast.error('Title is required')
       return
     }
 
@@ -90,19 +96,33 @@ export default function WorkoutTemplates() {
           id: editingTemplate.id,
           data: formData,
         })
+        toast.success('Template updated successfully!')
       } else {
         await createTemplate.mutateAsync(formData as Omit<WorkoutPlan, 'id' | 'userId' | 'status'>)
+        toast.success('Template created successfully!')
       }
       handleCloseModal()
     } catch (error) {
       console.error('Failed to save template:', error)
-      alert('Failed to save template')
+      toast.error('Failed to save template. Please try again.')
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this template?')) {
-      await deleteTemplate.mutateAsync(id)
+  const handleDeleteClick = (id: string) => {
+    setTemplateToDelete(id)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!templateToDelete) return
+    try {
+      await deleteTemplate.mutateAsync(templateToDelete)
+      toast.success('Template deleted successfully!')
+    } catch (error) {
+      console.error('Failed to delete template:', error)
+      toast.error('Failed to delete template. Please try again.')
+    } finally {
+      setTemplateToDelete(null)
     }
   }
 
@@ -128,15 +148,17 @@ export default function WorkoutTemplates() {
 
   const runSeedDefaults = async (options: { silent?: boolean } = {}) => {
     if (!auth.currentUser?.uid) {
-      if (!options.silent) alert('You must be logged in to seed default templates.')
+      if (!options.silent) toast.error('You must be logged in to seed default templates.')
       return
     }
     if (!exercises?.length && !options.silent) {
-      const proceed = confirm(
-        'No exercises in the library yet. Templates will still be created with default exercise names. Seed exercises in Exercise Management for the full experience. Continue?'
-      )
-      if (!proceed) return
+      setSeedConfirmOpen(true)
+      return
     }
+    await performSeed(options)
+  }
+
+  const performSeed = async (options: { silent?: boolean } = {}) => {
     setIsSeeding(true)
     let added = 0
     let failed = 0
@@ -156,17 +178,17 @@ export default function WorkoutTemplates() {
       }
       if (!options.silent) {
         if (added > 0) {
-          alert(
+          toast.success(
             `Added ${added} default template${added === 1 ? '' : 's'}.${failed > 0 ? ` ${failed} failed (see console).` : ''}`
           )
         }
         if (failed === DEFAULT_WORKOUT_TEMPLATES.length) {
-          alert('No templates were added. Check the browser console for errors.')
+          toast.error('No templates were added. Check the browser console for errors.')
         }
       }
     } catch (error) {
       console.error('Seed default templates failed:', error)
-      if (!options.silent) alert('Failed to seed default templates.')
+      if (!options.silent) toast.error('Failed to seed default templates.')
     } finally {
       setIsSeeding(false)
     }
@@ -344,7 +366,7 @@ export default function WorkoutTemplates() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDelete(template.id)}
+                      onClick={() => handleDeleteClick(template.id)}
                       className="h-9 w-9 p-0 hover:text-red-400"
                     >
                       <Trash2 size={16} />
@@ -612,6 +634,29 @@ export default function WorkoutTemplates() {
             </Card>
           </div>
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          title="Delete Template"
+          description="Are you sure you want to delete this template? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          onConfirm={handleDeleteConfirm}
+          variant="destructive"
+        />
+
+        {/* Seed Confirmation Dialog */}
+        <Dialog
+          open={seedConfirmOpen}
+          onOpenChange={setSeedConfirmOpen}
+          title="Seed Default Templates"
+          description="No exercises in the library yet. Templates will still be created with default exercise names. Seed exercises in Exercise Management for the full experience. Continue?"
+          confirmText="Continue"
+          cancelText="Cancel"
+          onConfirm={() => performSeed({ silent: false })}
+        />
       </div>
     </div>
   )

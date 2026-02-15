@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useWorkoutSession, useDeleteWorkoutSession } from '../../hooks/useWorkoutSessions'
 import { Card } from '@repo/ui/Card'
 import { Button } from '@repo/ui/Button'
+import { Dialog } from '@repo/ui/Dialog'
+import { useToast } from '@repo/ui/useToast'
 import {
   Loader2,
   ArrowLeft,
@@ -18,16 +21,21 @@ export default function WorkoutDetail() {
   const { id } = useParams<{ id: string }>()
   const { data: workout, isLoading } = useWorkoutSession(id!)
   const deleteWorkoutMutation = useDeleteWorkoutSession()
+  const toast = useToast()
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
-  const handleDelete = async () => {
-    if (workout && confirm(`Delete "${workout.title}"?`)) {
-      try {
-        await deleteWorkoutMutation.mutateAsync(id!)
-        window.location.href = '/workouts/history'
-      } catch (error) {
-        console.error('Failed to delete workout:', error)
-        alert('Failed to delete workout')
-      }
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    try {
+      await deleteWorkoutMutation.mutateAsync(id!)
+      toast.success('Workout deleted successfully!')
+      window.location.href = '/workouts/history'
+    } catch (error) {
+      console.error('Failed to delete workout:', error)
+      toast.error('Failed to delete workout. Please try again.')
     }
   }
 
@@ -116,7 +124,7 @@ export default function WorkoutDetail() {
         <Button
           variant="outline"
           className="border-neutral-700 text-red-500 hover:text-red-400"
-          onClick={handleDelete}
+          onClick={handleDeleteClick}
           disabled={deleteWorkoutMutation.isPending}
         >
           {deleteWorkoutMutation.isPending ? (
@@ -318,6 +326,19 @@ export default function WorkoutDetail() {
           </div>
         </Card>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Workout"
+        description={`Are you sure you want to delete "${workout?.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleDeleteConfirm}
+        variant="destructive"
+        isLoading={deleteWorkoutMutation.isPending}
+      />
     </div>
   )
 }

@@ -10,6 +10,9 @@
     "./Card": "./components/ui/card.tsx",
     "./Input": "./components/ui/input.tsx",
     "./Table": "./components/ui/table.tsx",
+    "./Dialog": "./components/ui/dialog.tsx",
+    "./Toast": "./components/ui/toast.tsx",
+    "./useToast": "./lib/use-toast.ts",
     "./utils": "./lib/utils.ts"
   },
   "scripts": {
@@ -24,6 +27,7 @@
   "dependencies": {
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "lucide-react": "^0.263.1",
     "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
