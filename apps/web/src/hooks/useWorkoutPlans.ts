@@ -11,33 +11,99 @@ import {
   orderBy,
 } from 'firebase/firestore'
 import { db, auth } from '../lib/firebase'
-import type { WorkoutPlan } from '@repo/shared/schemas'
+import type { WorkoutPlan, WorkoutExercise } from '@repo/shared/schemas'
 import { logActivity } from '../lib/activity'
+
+// ── Helpers ────────────────────────────────────────────────
+
+/**
+ * Strip undefined values from an object so Firestore never chokes.
+ * Handles nested objects and arrays recursively.
+ */
+function stripUndefined<T extends Record<string, unknown>>(obj: T): T {
+  return Object.fromEntries(
+    Object.entries(obj)
+      .filter(([, v]) => v !== undefined)
+      .map(([k, v]) => {
+        if (Array.isArray(v))
+          return [
+            k,
+            v.map(item =>
+              typeof item === 'object' && item !== null
+                ? stripUndefined(item as Record<string, unknown>)
+                : item
+            ),
+          ]
+        if (typeof v === 'object' && v !== null && !(v instanceof Date))
+          return [k, stripUndefined(v as Record<string, unknown>)]
+        return [k, v]
+      })
+  ) as T
+}
+
+/** Sanitize exercises for Firestore — strips undefined and trims strings */
+function sanitizeExercises(exercises: WorkoutExercise[]): WorkoutExercise[] {
+  return exercises
+    .filter(ex => ex.name.trim() !== '')
+    .map(
+      ex =>
+        stripUndefined({
+          name: ex.name.trim(),
+          sets: ex.sets,
+          reps: ex.reps,
+          ...(ex.weight != null && { weight: ex.weight }),
+          ...(ex.rest != null && { rest: ex.rest }),
+          ...(ex.notes?.trim() && { notes: ex.notes.trim() }),
+        }) as WorkoutExercise
+    )
+}
+
+/** Silent activity logging — never blocks the main operation */
+async function safeLogActivity(...args: Parameters<typeof logActivity>) {
+  try {
+    await logActivity(...args)
+  } catch (err) {
+    console.warn('[activity-log] failed silently:', err)
+  }
+}
+
+// ── Query keys (centralised for easy invalidation) ─────────
+
+const planKeys = {
+  all: ['workout-plans'] as const,
+  user: (uid: string) => ['workout-plans', uid] as const,
+  templates: ['public-workout-templates'] as const,
+}
+
+// ── Queries ────────────────────────────────────────────────
 
 export function useWorkoutPlans() {
   return useQuery({
-    queryKey: ['workout-plans', auth.currentUser?.uid],
+    queryKey: planKeys.user(auth.currentUser?.uid ?? ''),
     queryFn: async () => {
       const userId = auth.currentUser?.uid
+      console.log('useWorkoutPlans - userId:', userId)
       if (!userId) throw new Error('Not authenticated')
 
-      const userPlansQuery = query(
-        collection(db, 'workout-plans'),
-        where('userId', '==', userId),
-        where('status', '==', 'active'),
-        orderBy('createdAt', 'desc')
+      const snapshot = await getDocs(
+        query(
+          collection(db, 'workout-plans'),
+          where('userId', '==', userId),
+          where('status', '==', 'active')
+        )
       )
 
-      const snapshot = await getDocs(userPlansQuery)
-      return snapshot.docs.map(doc => {
-        const data = doc.data()
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate(),
-          updatedAt: data.updatedAt?.toDate(),
-        } as WorkoutPlan & { id: string }
-      })
+      return snapshot.docs
+        .map(d => {
+          const data = d.data()
+          return {
+            id: d.id,
+            ...data,
+            createdAt: data.createdAt?.toDate?.() ?? new Date(),
+            updatedAt: data.updatedAt?.toDate?.() ?? new Date(),
+          } as WorkoutPlan & { id: string }
+        })
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     },
     enabled: !!auth.currentUser?.uid,
   })
@@ -45,21 +111,22 @@ export function useWorkoutPlans() {
 
 export function usePublicWorkoutTemplates() {
   return useQuery({
-    queryKey: ['public-workout-templates'],
+    queryKey: planKeys.templates,
     queryFn: async () => {
-      const templatesQuery = query(
-        collection(db, 'workout-templates'),
-        where('isPublic', '==', true),
-        orderBy('createdAt', 'desc')
+      const snapshot = await getDocs(
+        query(
+          collection(db, 'workout-templates'),
+          where('isPublic', '==', true),
+          orderBy('createdAt', 'desc')
+        )
       )
 
-      const snapshot = await getDocs(templatesQuery)
       return snapshot.docs
         .filter(d => d.data().status !== 'deleted')
-        .map(doc => {
-          const data = doc.data()
+        .map(d => {
+          const data = d.data()
           return {
-            id: doc.id,
+            id: d.id,
             ...data,
             createdAt: data.createdAt?.toDate(),
             updatedAt: data.updatedAt?.toDate(),
@@ -69,36 +136,97 @@ export function usePublicWorkoutTemplates() {
   })
 }
 
-/** Create a personal workout plan for the current user */
+// ── Mutations ──────────────────────────────────────────────
+
+type CreatePlanInput = Omit<WorkoutPlan, 'id' | 'userId' | 'status' | 'createdAt' | 'updatedAt'>
+
 export function useCreateWorkoutPlan() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (planData: Omit<WorkoutPlan, 'id' | 'userId' | 'status'>) => {
+    mutationFn: async (planData: CreatePlanInput) => {
       const userId = auth.currentUser?.uid
       if (!userId) throw new Error('Not authenticated')
 
-      const docRef = await addDoc(collection(db, 'workout-plans'), {
-        ...planData,
+      const exercises = sanitizeExercises(planData.exercises)
+      if (!planData.title.trim()) throw new Error('Plan must have a title')
+      if (exercises.length === 0) throw new Error('Add at least one exercise')
+
+      const payload = stripUndefined({
+        title: planData.title.trim(),
+        description: planData.description?.trim() || '',
+        exercises,
         userId,
-        status: 'active',
+        status: 'active' as const,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       })
 
-      await logActivity(userId, 'create', 'workout-plan', docRef.id, {
+      const docRef = await addDoc(collection(db, 'workout-plans'), payload)
+
+      // Non-blocking activity log
+      safeLogActivity(userId, 'create', 'workout-plan', docRef.id, {
         title: planData.title,
       })
 
-      return { id: docRef.id, ...planData }
+      return {
+        id: docRef.id,
+        title: payload.title,
+        description: payload.description,
+        exercises,
+        userId,
+        status: 'active' as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workout-plans'] })
+
+    // Optimistic: immediately show the new plan in the list
+    onMutate: async planData => {
+      const userId = auth.currentUser?.uid ?? ''
+      const key = planKeys.user(userId)
+
+      await queryClient.cancelQueries({ queryKey: key })
+      const previous = queryClient.getQueryData<(WorkoutPlan & { id: string })[]>(key)
+
+      const optimisticPlan: WorkoutPlan & { id: string } = {
+        id: `temp-${Date.now()}`,
+        title: planData.title.trim(),
+        description: planData.description?.trim() || '',
+        exercises: sanitizeExercises(planData.exercises),
+        userId,
+        status: 'active',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+
+      queryClient.setQueryData<(WorkoutPlan & { id: string })[]>(key, old => [
+        optimisticPlan,
+        ...(old ?? []),
+      ])
+
+      return { previous, key }
+    },
+
+    // Replace the optimistic entry with the real Firestore doc
+    onSuccess: (result, _vars, context) => {
+      if (!context) return
+      queryClient.setQueryData<(WorkoutPlan & { id: string })[]>(context.key, old =>
+        (old ?? []).map(p => (p.id.startsWith('temp-') ? { ...result } : p))
+      )
+    },
+
+    // Roll back on error
+    onError: (_err, _vars, context) => {
+      if (context) queryClient.setQueryData(context.key, context.previous)
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: planKeys.all })
     },
   })
 }
 
-/** Update an existing workout plan */
 export function useUpdateWorkoutPlan() {
   const queryClient = useQueryClient()
 
@@ -107,22 +235,24 @@ export function useUpdateWorkoutPlan() {
       const userId = auth.currentUser?.uid
       if (!userId) throw new Error('Not authenticated')
 
-      await updateDoc(doc(db, 'workout-plans', id), {
+      const sanitized = stripUndefined({
         ...data,
+        ...(data.exercises && { exercises: sanitizeExercises(data.exercises) }),
         updatedAt: serverTimestamp(),
       })
 
-      await logActivity(userId, 'update', 'workout-plan', id, {
+      await updateDoc(doc(db, 'workout-plans', id), sanitized)
+
+      safeLogActivity(userId, 'update', 'workout-plan', id, {
         updates: Object.keys(data),
       })
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workout-plans'] })
+      queryClient.invalidateQueries({ queryKey: planKeys.all })
     },
   })
 }
 
-/** Soft delete: sets status to 'deleted' */
 export function useDeleteWorkoutPlan() {
   const queryClient = useQueryClient()
 
@@ -136,15 +266,34 @@ export function useDeleteWorkoutPlan() {
         updatedAt: serverTimestamp(),
       })
 
-      await logActivity(userId, 'delete', 'workout-plan', id)
+      safeLogActivity(userId, 'delete', 'workout-plan', id)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workout-plans'] })
+
+    // Optimistic: instantly remove from UI
+    onMutate: async id => {
+      const userId = auth.currentUser?.uid ?? ''
+      const key = planKeys.user(userId)
+
+      await queryClient.cancelQueries({ queryKey: key })
+      const previous = queryClient.getQueryData<(WorkoutPlan & { id: string })[]>(key)
+
+      queryClient.setQueryData<(WorkoutPlan & { id: string })[]>(key, old =>
+        (old ?? []).filter(p => p.id !== id)
+      )
+
+      return { previous, key }
+    },
+
+    onError: (_err, _id, context) => {
+      if (context) queryClient.setQueryData(context.key, context.previous)
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: planKeys.all })
     },
   })
 }
 
-/** Archive a workout plan (soft, recoverable) */
 export function useArchiveWorkoutPlan() {
   const queryClient = useQueryClient()
 
@@ -158,10 +307,30 @@ export function useArchiveWorkoutPlan() {
         updatedAt: serverTimestamp(),
       })
 
-      await logActivity(userId, 'update', 'workout-plan', id, { status: 'archived' })
+      safeLogActivity(userId, 'update', 'workout-plan', id, { status: 'archived' })
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workout-plans'] })
+
+    // Optimistic: remove from active list immediately
+    onMutate: async id => {
+      const userId = auth.currentUser?.uid ?? ''
+      const key = planKeys.user(userId)
+
+      await queryClient.cancelQueries({ queryKey: key })
+      const previous = queryClient.getQueryData<(WorkoutPlan & { id: string })[]>(key)
+
+      queryClient.setQueryData<(WorkoutPlan & { id: string })[]>(key, old =>
+        (old ?? []).filter(p => p.id !== id)
+      )
+
+      return { previous, key }
+    },
+
+    onError: (_err, _id, context) => {
+      if (context) queryClient.setQueryData(context.key, context.previous)
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: planKeys.all })
     },
   })
 }

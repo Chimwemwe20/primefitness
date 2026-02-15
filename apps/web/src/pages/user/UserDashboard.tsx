@@ -6,20 +6,20 @@ import { useRecentWorkouts } from '../../hooks/useRecentWorkouts'
 import { Card } from '@repo/ui/Card'
 import { Button } from '@repo/ui/Button'
 import { Loader2, Dumbbell, Target, Calendar, Activity, Award, Plus, History } from 'lucide-react'
-import ProfileModal from './ProfileModal.tsx'
-import DashboardSidebar from './DashboardSidebar.tsx'
+import ProfileDialog from './ProfileDialog'
+import DashboardSidebar from './DashboardSidebar'
 
 export default function UserDashboard() {
   const { profile } = useAuth()
   const { data: stats, isLoading: statsLoading } = useUserStats()
   const { data: recentWorkouts, isLoading: workoutsLoading } = useRecentWorkouts()
-  const [showProfileModal, setShowProfileModal] = useState(false)
+  const [showProfileDialog, setShowProfileDialog] = useState(false)
   const navigate = useNavigate()
 
   // Check if user needs to complete profile
   useEffect(() => {
     if (profile && (!profile.height || !profile.weight || !profile.age || !profile.gender)) {
-      setShowProfileModal(true)
+      setShowProfileDialog(true)
     }
   }, [profile])
 
@@ -68,10 +68,10 @@ export default function UserDashboard() {
             Ready to crush your fitness goals today?
           </p>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-            <Link to="/workouts/log">
+            <Link to="/workouts">
               <Button className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white h-12 sm:h-10">
                 <Plus size={18} className="mr-2" />
-                Log Workout
+                Workouts
               </Button>
             </Link>
             <Link to="/workouts/history">
@@ -202,14 +202,14 @@ export default function UserDashboard() {
           <DashboardSidebar
             profile={profile}
             stats={stats}
-            onEditProfile={() => setShowProfileModal(true)}
+            onEditProfile={() => setShowProfileDialog(true)}
             className="order-2"
           />
         </div>
       </div>
 
-      {/* Profile Completion Modal */}
-      {showProfileModal && <ProfileModal onClose={() => setShowProfileModal(false)} />}
+      {/* Profile Completion Dialog */}
+      <ProfileDialog open={showProfileDialog} onOpenChange={setShowProfileDialog} />
     </div>
   )
 }
