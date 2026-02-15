@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button } from '../../../../packages/ui/components/ui/button'
-import { Card } from '../../../../packages/ui/components/ui/card'
+import { Card } from '@repo/ui/Card'
+import { Button } from '@repo/ui/Button'
 
 export default function FitnessLanding() {
   const navigate = useNavigate()
@@ -50,22 +50,16 @@ export default function FitnessLanding() {
               className={`hidden md:flex items-center gap-8 lg:gap-12 text-sm font-medium tracking-wider transition-all duration-700 delay-100 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}
             >
               <a
-                href="#programs"
+                href="#features"
                 className="text-neutral-500 hover:text-neutral-100 transition-colors duration-300 relative after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-neutral-400 after:transition-all after:duration-300 hover:after:w-full"
               >
-                PROGRAMS
+                FEATURES
               </a>
               <a
                 href="#transform"
                 className="text-neutral-500 hover:text-neutral-100 transition-colors duration-300 relative after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-neutral-400 after:transition-all after:duration-300 hover:after:w-full"
               >
                 TRANSFORM
-              </a>
-              <a
-                href="#join"
-                className="text-neutral-500 hover:text-neutral-100 transition-colors duration-300 relative after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-neutral-400 after:transition-all after:duration-300 hover:after:w-full"
-              >
-                JOIN
               </a>
             </div>
 
@@ -74,15 +68,9 @@ export default function FitnessLanding() {
             >
               <Button
                 onClick={navigateToAuth}
-                className="hidden sm:inline-flex px-5 py-2.5 bg-transparent text-neutral-400 hover:text-neutral-100 hover:bg-neutral-900/50 border-2 border-neutral-800 hover:border-neutral-600 transition-all duration-300 text-sm font-bold bebas tracking-[0.15em] rounded-none"
-              >
-                SIGN IN
-              </Button>
-              <Button
-                onClick={navigateToAuth}
                 className="px-6 py-2.5 sm:px-8 sm:py-3 bg-neutral-200 text-black hover:bg-neutral-100 transition-all duration-300 text-sm font-bold bebas tracking-[0.15em] rounded-none shadow-lg hover:shadow-neutral-200/20 hover:shadow-2xl"
               >
-                START NOW
+                GET STARTED
               </Button>
             </div>
           </div>
@@ -132,24 +120,24 @@ export default function FitnessLanding() {
               <div
                 className={`inline-block px-4 py-2 bg-neutral-900/80 border-2 border-neutral-800 text-neutral-400 text-xs font-bold tracking-[0.2em] backdrop-blur-sm transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
               >
-                REDEFINE YOUR LIMITS
+                YOUR COMPLETE FITNESS TRACKER
               </div>
 
               <h1
                 className={`bebas text-7xl sm:text-8xl md:text-9xl lg:text-[11rem] leading-[0.85] text-neutral-100 tracking-tight transition-all duration-700 delay-200 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'}`}
               >
-                PUSH
+                TRAIN
                 <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-neutral-600 via-neutral-500 to-neutral-700">
-                  BEYOND
+                  SMARTER
                 </span>
               </h1>
 
               <p
                 className={`text-lg sm:text-xl text-neutral-400 max-w-xl font-light leading-relaxed transition-all duration-700 delay-300 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}
               >
-                Transform your body and mind with science-backed training programs designed for
-                athletes who refuse to settle for average.
+                Set goals, log workouts, and create custom training plans. Track your progress and
+                stay consistent with the tools you need to reach your fitness potential.
               </p>
             </div>
 
@@ -160,14 +148,17 @@ export default function FitnessLanding() {
                 onClick={navigateToAuth}
                 className="group px-8 py-4 sm:px-10 sm:py-5 bg-neutral-200 text-black hover:bg-neutral-100 transition-all duration-300 bebas text-xl tracking-[0.15em] relative overflow-hidden w-full sm:w-auto rounded-none shadow-xl hover:shadow-2xl hover:shadow-neutral-200/10 border-2 border-transparent hover:border-neutral-300"
               >
-                <span className="relative z-10">GET STARTED FREE</span>
+                <span className="relative z-10">GET STARTED</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
               </Button>
               <Button
                 variant="outline"
+                onClick={() =>
+                  document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })
+                }
                 className="px-8 py-4 sm:px-10 sm:py-5 border-2 border-neutral-700 text-neutral-300 hover:border-neutral-500 hover:text-neutral-100 hover:bg-neutral-900/50 transition-all duration-300 bebas text-xl tracking-[0.15em] w-full sm:w-auto rounded-none backdrop-blur-sm"
               >
-                VIEW PROGRAMS
+                LEARN MORE
               </Button>
             </div>
           </div>
@@ -317,7 +308,7 @@ export default function FitnessLanding() {
 
       {/* Features Section */}
       <div
-        id="programs"
+        id="features"
         className="py-20 sm:py-28 lg:py-36 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-black via-neutral-950 to-black relative"
       >
         <div
@@ -332,52 +323,70 @@ export default function FitnessLanding() {
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-16 sm:mb-20 lg:mb-24">
             <h2 className="bebas text-5xl sm:text-6xl lg:text-7xl text-neutral-100 mb-4 sm:mb-6 tracking-tight">
-              TRAINING SYSTEM
+              EVERYTHING YOU NEED
             </h2>
             <p className="text-neutral-500 text-lg sm:text-xl font-light max-w-2xl mx-auto px-4">
-              Everything you need to achieve peak performance
+              Complete tools to plan, track, and achieve your fitness goals
             </p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            {[
-              {
-                title: 'CUSTOM PROGRAMS',
-                desc: 'Workout plans that adapt to your progress and goals as you train.',
-                num: '01',
-              },
-              {
-                title: 'TRACK EVERYTHING',
-                desc: 'Log your workouts, track your lifts, and monitor your body composition over time.',
-                num: '02',
-              },
-              {
-                title: 'STAY CONSISTENT',
-                desc: 'Build habits with streaks, reminders, and a training schedule that fits your life.',
-                num: '03',
-              },
-            ].map((feature, i) => (
-              <Card
-                key={i}
-                className="feature-card p-8 sm:p-10 bg-neutral-950/80 border-2 border-neutral-900 transition-all duration-500 hover:-translate-y-3 hover:shadow-2xl hover:border-neutral-800 backdrop-blur-sm relative overflow-hidden group"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-transparent via-neutral-800/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <Card className="feature-card p-8 sm:p-10 bg-neutral-950/80 border-2 border-neutral-900 transition-all duration-500 hover:-translate-y-3 hover:shadow-2xl hover:border-neutral-800 backdrop-blur-sm relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-transparent via-neutral-800/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
-                <div className="relative z-10">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-neutral-900 border-2 border-neutral-800 flex items-center justify-center mb-6 sm:mb-8 group-hover:border-neutral-700 transition-all duration-300">
-                    <div className="bebas text-3xl sm:text-4xl text-neutral-600 group-hover:text-neutral-500 transition-colors">
-                      {feature.num}
-                    </div>
+              <div className="relative z-10">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-neutral-900 border-2 border-neutral-800 flex items-center justify-center mb-6 sm:mb-8 group-hover:border-neutral-700 transition-all duration-300">
+                  <div className="bebas text-3xl sm:text-4xl text-neutral-600 group-hover:text-neutral-500 transition-colors">
+                    01
                   </div>
-                  <h3 className="bebas text-2xl sm:text-3xl text-neutral-100 mb-3 sm:mb-4 tracking-wide">
-                    {feature.title}
-                  </h3>
-                  <p className="text-base sm:text-lg text-neutral-500 font-light leading-relaxed">
-                    {feature.desc}
-                  </p>
                 </div>
-              </Card>
-            ))}
+                <h3 className="bebas text-2xl sm:text-3xl text-neutral-100 mb-3 sm:mb-4 tracking-wide">
+                  LOG WORKOUTS
+                </h3>
+                <p className="text-base sm:text-lg text-neutral-500 font-light leading-relaxed">
+                  Track sets, reps, and weight for every exercise. Built-in rest timer and real-time
+                  workout duration tracking keep you focused.
+                </p>
+              </div>
+            </Card>
+
+            <Card className="feature-card p-8 sm:p-10 bg-neutral-950/80 border-2 border-neutral-900 transition-all duration-500 hover:-translate-y-3 hover:shadow-2xl hover:border-neutral-800 backdrop-blur-sm relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-transparent via-neutral-800/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+              <div className="relative z-10">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-neutral-900 border-2 border-neutral-800 flex items-center justify-center mb-6 sm:mb-8 group-hover:border-neutral-700 transition-all duration-300">
+                  <div className="bebas text-3xl sm:text-4xl text-neutral-600 group-hover:text-neutral-500 transition-colors">
+                    02
+                  </div>
+                </div>
+                <h3 className="bebas text-2xl sm:text-3xl text-neutral-100 mb-3 sm:mb-4 tracking-wide">
+                  CUSTOM PLANS
+                </h3>
+                <p className="text-base sm:text-lg text-neutral-500 font-light leading-relaxed">
+                  Create personalized workout plans tailored to your goals. Choose exercises, set
+                  target reps and sets, then follow your plan when you train.
+                </p>
+              </div>
+            </Card>
+
+            <Card className="feature-card p-8 sm:p-10 bg-neutral-950/80 border-2 border-neutral-900 transition-all duration-500 hover:-translate-y-3 hover:shadow-2xl hover:border-neutral-800 backdrop-blur-sm relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-transparent via-neutral-800/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+              <div className="relative z-10">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-neutral-900 border-2 border-neutral-800 flex items-center justify-center mb-6 sm:mb-8 group-hover:border-neutral-700 transition-all duration-300">
+                  <div className="bebas text-3xl sm:text-4xl text-neutral-600 group-hover:text-neutral-500 transition-colors">
+                    03
+                  </div>
+                </div>
+                <h3 className="bebas text-2xl sm:text-3xl text-neutral-100 mb-3 sm:mb-4 tracking-wide">
+                  SET GOALS
+                </h3>
+                <p className="text-base sm:text-lg text-neutral-500 font-light leading-relaxed">
+                  Define your fitness goals and track progress over time. Monitor your journey with
+                  detailed workout history and performance metrics.
+                </p>
+              </div>
+            </Card>
           </div>
         </div>
       </div>
@@ -409,33 +418,18 @@ export default function FitnessLanding() {
               </span>
             </h2>
             <p className="text-neutral-400 text-lg sm:text-xl font-light mb-8 sm:mb-10 leading-relaxed max-w-xl">
-              Build the training habit that sticks. Track your workouts, follow structured programs,
-              and see your progress over time — all completely free.
+              Build the training habit that sticks. Log every workout, follow your custom plans, and
+              watch your progress compound over time — all completely free.
             </p>
             <Button
               onClick={navigateToAuth}
               className="px-10 py-4 sm:px-12 sm:py-5 bg-neutral-200 text-black hover:bg-neutral-100 transition-all duration-300 bebas text-xl sm:text-2xl tracking-[0.15em] w-full sm:w-auto rounded-none shadow-xl hover:shadow-2xl hover:shadow-neutral-200/10 border-2 border-transparent hover:border-neutral-300 group relative overflow-hidden"
             >
-              <span className="relative z-10">START YOUR JOURNEY</span>
+              <span className="relative z-10">GET STARTED</span>
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
             </Button>
           </div>
         </div>
-      </div>
-
-      {/* CTA Section */}
-      <div
-        id="join"
-        className="py-16 sm:py-20 lg:py-28 px-4 sm:px-6 lg:px-8 bg-neutral-950 relative"
-      >
-        <div
-          className="absolute inset-0 opacity-[0.015]"
-          style={{
-            backgroundImage:
-              'linear-gradient(rgba(163, 163, 163, 0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(163, 163, 163, 0.5) 1px, transparent 1px)',
-            backgroundSize: '40px 40px',
-          }}
-        ></div>
       </div>
 
       {/* Footer */}

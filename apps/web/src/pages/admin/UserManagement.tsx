@@ -7,7 +7,7 @@ import { Dialog } from '@repo/ui/Dialog'
 import { useToast } from '@repo/ui/useToast'
 import {
   Loader2,
-  Shield,
+  Crown,
   User as UserIcon,
   Search,
   ChevronLeft,
@@ -90,7 +90,7 @@ export default function UserManagement() {
   const getRoleIcon = (role: string) => {
     switch (role) {
       case 'admin':
-        return Shield
+        return Crown
       default:
         return UserIcon
     }
@@ -232,7 +232,7 @@ export default function UserManagement() {
                                 onClick={() => handleRoleChangeClick(user.uid, 'admin')}
                                 className="h-8 text-xs border-border hover:border-red-500/50 hover:text-red-400"
                               >
-                                <Shield size={14} className="mr-1" />
+                                <Crown size={14} className="mr-1" />
                                 Admin
                               </Button>
                             )}
@@ -309,7 +309,7 @@ export default function UserManagement() {
                       onClick={() => handleRoleChangeClick(user.uid, 'admin')}
                       className="flex-1 h-9 text-xs border-border hover:border-red-500/50 hover:text-red-400"
                     >
-                      <Shield size={14} className="mr-1" />
+                      <Crown size={14} className="mr-1" />
                       Admin
                     </Button>
                   )}

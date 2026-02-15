@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button } from '../../../../packages/ui/components/ui/button'
-import { Card } from '../../../../packages/ui/components/ui/card'
-import { Input } from '../../../../packages/ui/components/ui/input'
+import { Card } from '@repo/ui/Card'
+import { Button } from '@repo/ui/Button'
+import { Input } from '@repo/ui/Input'
 import {
   signInWithPopup,
   GoogleAuthProvider,
