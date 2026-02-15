@@ -2,21 +2,36 @@ import { useQuery } from '@tanstack/react-query'
 import { collection, getCountFromServer, query, where } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 
+export interface AdminStats {
+  totalUsers: number
+  workoutsToday: number
+  systemStatus: string
+}
+
 export function useAdminStats() {
-  return useQuery({
+  return useQuery<AdminStats>({
     queryKey: ['admin-stats'],
-    queryFn: async () => {
+    queryFn: async (): Promise<AdminStats> => {
       // Users count
       const usersColl = collection(db, 'users')
       const totalUsersSnapshot = await getCountFromServer(usersColl)
 
-      // Active Coaches count (assuming role='coach' and status='active' or isActive=true)
-      const coachesQuery = query(usersColl, where('role', '==', 'coach'))
-      const coachesSnapshot = await getCountFromServer(coachesQuery)
+      // Workouts today (all users)
+      const sessionsColl = collection(db, 'workout-sessions')
+      const startOfToday = new Date()
+      startOfToday.setHours(0, 0, 0, 0)
+      const startOfTomorrow = new Date(startOfToday)
+      startOfTomorrow.setDate(startOfTomorrow.getDate() + 1)
+      const workoutsTodayQuery = query(
+        sessionsColl,
+        where('startTime', '>=', startOfToday),
+        where('startTime', '<', startOfTomorrow)
+      )
+      const workoutsTodaySnapshot = await getCountFromServer(workoutsTodayQuery)
 
       return {
         totalUsers: totalUsersSnapshot.data().count,
-        activeCoaches: coachesSnapshot.data().count,
+        workoutsToday: workoutsTodaySnapshot.data().count,
         systemStatus: 'Healthy', // Placeholder for now, or check generic connectivity
       }
     },

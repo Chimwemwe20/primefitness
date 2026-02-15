@@ -10,8 +10,7 @@ import {
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
 } from 'firebase/auth'
-import { doc, setDoc, Timestamp } from 'firebase/firestore'
-import { auth, db } from '../lib/firebase'
+import { auth } from '../lib/firebase'
 import { useAuth } from '../providers/AuthContext'
 import { useEffect } from 'react'
 
@@ -57,22 +56,10 @@ export default function AuthPage() {
 
     try {
       if (isSignUp) {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-        const user = userCredential.user
-
-        await setDoc(doc(db, 'users', user.uid), {
-          uid: user.uid,
-          email: user.email,
-          role: 'user',
-          status: 'active',
-          isActive: true,
-          createdAt: Timestamp.now(),
-          updatedAt: Timestamp.now(),
-        })
+        await createUserWithEmailAndPassword(auth, email, password)
       } else {
         await signInWithEmailAndPassword(auth, email, password)
       }
-
       navigate('/app')
     } catch (err) {
       console.error('Auth error:', err)
