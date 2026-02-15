@@ -1,13 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import {
-  collection,
-  getDocs,
-  doc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  serverTimestamp,
-} from 'firebase/firestore'
+import { collection, getDocs, doc, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db, auth } from '../lib/firebase'
 import type { Exercise } from '@repo/shared/schemas'
 import { logActivity } from '../lib/activity'
@@ -17,15 +9,17 @@ export function useAdminExercises() {
     queryKey: ['admin-exercises'],
     queryFn: async () => {
       const snapshot = await getDocs(collection(db, 'exercises'))
-      return snapshot.docs.map(
-        doc =>
-          ({
-            id: doc.id,
-            ...doc.data(),
-            createdAt: doc.data().createdAt?.toDate(),
-            updatedAt: doc.data().updatedAt?.toDate(),
-          }) as Exercise & { id: string }
-      )
+      return snapshot.docs
+        .filter(d => !d.data().deletedAt)
+        .map(
+          d =>
+            ({
+              id: d.id,
+              ...d.data(),
+              createdAt: d.data().createdAt?.toDate(),
+              updatedAt: d.data().updatedAt?.toDate(),
+            }) as Exercise & { id: string }
+        )
     },
   })
 }
@@ -80,12 +74,16 @@ export function useUpdateExercise() {
   })
 }
 
+/** Soft delete: sets deletedAt so item is hidden from lists. */
 export function useDeleteExercise() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (id: string) => {
-      await deleteDoc(doc(db, 'exercises', id))
+      await updateDoc(doc(db, 'exercises', id), {
+        deletedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      })
 
       const userId = auth.currentUser?.uid
       if (userId) {

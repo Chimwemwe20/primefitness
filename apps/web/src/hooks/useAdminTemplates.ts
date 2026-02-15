@@ -5,7 +5,6 @@ import {
   doc,
   addDoc,
   updateDoc,
-  deleteDoc,
   serverTimestamp,
   query,
   orderBy,
@@ -34,15 +33,17 @@ export function useAdminTemplates() {
     queryFn: async () => {
       const q = query(collection(db, 'workout-templates'), orderBy('createdAt', 'desc'))
       const snapshot = await getDocs(q)
-      return snapshot.docs.map(
-        doc =>
-          ({
-            id: doc.id,
-            ...doc.data(),
-            createdAt: doc.data().createdAt?.toDate(),
-            updatedAt: doc.data().updatedAt?.toDate(),
-          }) as WorkoutPlan & { id: string }
-      )
+      return snapshot.docs
+        .filter(d => d.data().status !== 'deleted')
+        .map(
+          d =>
+            ({
+              id: d.id,
+              ...d.data(),
+              createdAt: d.data().createdAt?.toDate(),
+              updatedAt: d.data().updatedAt?.toDate(),
+            }) as WorkoutPlan & { id: string }
+        )
     },
   })
 }
@@ -113,12 +114,16 @@ export function useUpdateTemplate() {
   })
 }
 
+/** Soft delete: sets status to 'deleted' so template is hidden from lists. */
 export function useDeleteTemplate() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (id: string) => {
-      await deleteDoc(doc(db, 'workout-templates', id))
+      await updateDoc(doc(db, 'workout-templates', id), {
+        status: 'deleted',
+        updatedAt: serverTimestamp(),
+      })
 
       const userId = auth.currentUser?.uid
       if (userId) {

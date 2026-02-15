@@ -14,6 +14,7 @@ import type { User as UserProfile } from '@repo/shared/schemas'
 import Cookies from 'js-cookie'
 import { createUserProfile, updateUserLastLogin } from '../lib/userService'
 import { logActivity } from '../lib/activity'
+import AppLoader from '../components/AppLoader'
 
 interface AuthContextType {
   user: User | null
@@ -140,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         token,
       }}
     >
-      {!loading && children}
+      {loading ? <AppLoader /> : children}
     </AuthContext.Provider>
   )
 }

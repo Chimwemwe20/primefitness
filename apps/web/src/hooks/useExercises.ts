@@ -14,15 +14,17 @@ export function useExercises() {
       )
 
       const snapshot = await getDocs(q)
-      return snapshot.docs.map(doc => {
-        const data = doc.data()
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate(),
-          updatedAt: data.updatedAt?.toDate(),
-        } as Exercise & { id: string }
-      })
+      return snapshot.docs
+        .filter(d => !d.data().deletedAt)
+        .map(doc => {
+          const data = doc.data()
+          return {
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt?.toDate(),
+            updatedAt: data.updatedAt?.toDate(),
+          } as Exercise & { id: string }
+        })
     },
   })
 }
@@ -39,15 +41,17 @@ export function useExercisesByCategory(category: string) {
       )
 
       const snapshot = await getDocs(q)
-      return snapshot.docs.map(doc => {
-        const data = doc.data()
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate(),
-          updatedAt: data.updatedAt?.toDate(),
-        } as Exercise & { id: string }
-      })
+      return snapshot.docs
+        .filter(d => !d.data().deletedAt)
+        .map(doc => {
+          const data = doc.data()
+          return {
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt?.toDate(),
+            updatedAt: data.updatedAt?.toDate(),
+          } as Exercise & { id: string }
+        })
     },
     enabled: !!category,
   })

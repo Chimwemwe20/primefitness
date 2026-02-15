@@ -45,15 +45,17 @@ export function usePublicWorkoutTemplates() {
       )
 
       const snapshot = await getDocs(templatesQuery)
-      return snapshot.docs.map(doc => {
-        const data = doc.data()
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate(),
-          updatedAt: data.updatedAt?.toDate(),
-        } as WorkoutPlan & { id: string }
-      })
+      return snapshot.docs
+        .filter(d => d.data().status !== 'deleted')
+        .map(doc => {
+          const data = doc.data()
+          return {
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt?.toDate(),
+            updatedAt: data.updatedAt?.toDate(),
+          } as WorkoutPlan & { id: string }
+        })
     },
   })
 }

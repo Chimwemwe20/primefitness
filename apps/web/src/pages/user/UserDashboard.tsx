@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../providers/AuthContext'
 import { useUserStats } from '../../hooks/useUserStats'
 import { useRecentWorkouts } from '../../hooks/useRecentWorkouts'
@@ -66,13 +67,12 @@ export default function UserDashboard() {
           <p className="text-sm sm:text-base text-neutral-400 mb-3 sm:mb-4">
             Ready to crush your fitness goals today?
           </p>
-          <Button
-            onClick={() => (window.location.href = '/workouts/log')}
-            className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white h-12 sm:h-10"
-          >
-            <Plus size={18} className="mr-2" />
-            Log Workout
-          </Button>
+          <Link to="/workouts/log">
+            <Button className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white h-12 sm:h-10">
+              <Plus size={18} className="mr-2" />
+              Log Workout
+            </Button>
+          </Link>
         </div>
 
         {/* Stats Grid - Mobile First (2 cols mobile, 4 cols desktop) */}
@@ -119,14 +119,15 @@ export default function UserDashboard() {
                 <Dumbbell size={18} className="sm:w-5 sm:h-5" />
                 Recent Workouts
               </h2>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full sm:w-auto border-neutral-700 text-neutral-400 hover:text-neutral-100 text-sm h-10"
-                onClick={() => (window.location.href = '/workouts/history')}
-              >
-                View All
-              </Button>
+              <Link to="/workouts/history">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:w-auto border-neutral-700 text-neutral-400 hover:text-neutral-100 text-sm h-10"
+                >
+                  View All
+                </Button>
+              </Link>
             </div>
 
             {workoutsLoading ? (
@@ -173,12 +174,11 @@ export default function UserDashboard() {
               <div className="text-center py-12 sm:py-16">
                 <Dumbbell className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-neutral-700 mb-4" />
                 <p className="text-neutral-500 mb-4 text-sm sm:text-base">No workouts logged yet</p>
-                <Button
-                  onClick={() => (window.location.href = '/workouts/log')}
-                  className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 h-12 sm:h-10"
-                >
-                  Log Your First Workout
-                </Button>
+                <Link to="/workouts/log">
+                  <Button className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 h-12 sm:h-10">
+                    Log Your First Workout
+                  </Button>
+                </Link>
               </div>
             )}
           </Card>

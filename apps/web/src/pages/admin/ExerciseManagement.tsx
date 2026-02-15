@@ -4,7 +4,7 @@ import {
   useCreateExercise,
   useUpdateExercise,
   useDeleteExercise,
-} from '../../hooks/useAdminExcercises'
+} from '../../hooks/useAdminExercises'
 import { Card } from '@repo/ui/Card'
 import { Button } from '@repo/ui/Button'
 import { Input } from '@repo/ui/Input'

@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '../../../../packages/ui/components/ui/button'
 import { Card } from '../../../../packages/ui/components/ui/card'
 import { Input } from '../../../../packages/ui/components/ui/input'
 
 export default function FitnessLanding() {
+  const navigate = useNavigate()
   const [scrollY, setScrollY] = useState(0)
   const [email, setEmail] = useState('')
   const [isVisible, setIsVisible] = useState(false)
@@ -15,9 +17,7 @@ export default function FitnessLanding() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const navigateToAuth = () => {
-    window.location.href = '/auth'
-  }
+  const navigateToAuth = () => navigate('/auth')
 
   const handleEmailSubmit = () => {
     if (email) {

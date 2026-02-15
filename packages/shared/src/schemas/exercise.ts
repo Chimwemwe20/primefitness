@@ -26,10 +26,11 @@ export const ExerciseSchema = z.object({
   instructions: z.array(z.string()).optional(),
   videoUrl: z.string().url().optional(),
   imageUrl: z.string().url().optional(),
-  createdBy: z.string(), // userId of creator (admin/coach)
+  createdBy: z.string(), // userId of creator
   isPublic: z.boolean().default(true),
   createdAt: z.union([z.date(), z.string(), z.any()]).optional(),
   updatedAt: z.union([z.date(), z.string(), z.any()]).optional(),
+  deletedAt: z.union([z.date(), z.string(), z.any()]).optional(),
 })
 
 export type Exercise = z.infer<typeof ExerciseSchema>

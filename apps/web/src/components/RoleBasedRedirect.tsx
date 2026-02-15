@@ -1,23 +1,29 @@
-// Update to remove coach
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../providers/AuthContext'
+import AppLoader from './AppLoader'
 
+/**
+ * After login, redirect to the correct destination by role.
+ * Waits for profile so role is known before routing.
+ */
 export default function RoleBasedRedirect() {
-  const { profile, loading } = useAuth()
+  const { user, profile, loading } = useAuth()
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>
+    return <AppLoader />
   }
 
-  if (!profile) {
+  if (!user) {
     return <Navigate to="/auth" replace />
   }
 
-  // Redirect based on role
+  if (!profile) {
+    return <AppLoader />
+  }
+
   if (profile.role === 'admin') {
     return <Navigate to="/admin" replace />
   }
 
-  // Default to user dashboard
   return <Navigate to="/dashboard" replace />
 }

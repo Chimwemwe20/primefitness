@@ -24,6 +24,7 @@ import WorkoutDetail from './pages/user/WorkoutDetail'
 import Progress from './pages/user/Progress'
 import Goals from './pages/user/Goals'
 import UserCalendar from './pages/user/Calendar'
+import UserSettings from './pages/user/Settings'
 
 /**
  * Main App Component
@@ -72,6 +73,7 @@ export function App() {
 
               {/* Calendar & Settings */}
               <Route path="/calendar" element={<UserCalendar />} />
+              <Route path="/settings" element={<UserSettings />} />
             </Route>
           </Route>
 

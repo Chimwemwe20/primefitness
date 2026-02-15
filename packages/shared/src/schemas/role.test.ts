@@ -5,7 +5,6 @@ describe('RoleSchema', () => {
   it('should validate correct roles', () => {
     expect(RoleSchema.safeParse('admin').success).toBe(true)
     expect(RoleSchema.safeParse('user').success).toBe(true)
-    expect(RoleSchema.safeParse('coach').success).toBe(true)
   })
 
   it('should fail for invalid roles', () => {
