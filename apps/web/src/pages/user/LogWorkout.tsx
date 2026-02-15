@@ -6,7 +6,7 @@ import { usePublicWorkoutTemplates, useWorkoutPlans } from '../../hooks/useWorko
 import { Card } from '@repo/ui/Card'
 import { Button } from '@repo/ui/Button'
 import { Input } from '@repo/ui/Input'
-import { Plus, Trash2, Check, Pause, X, Search, Dumbbell, Timer } from 'lucide-react'
+import { Plus, Trash2, Check, Pause, X, Search, Dumbbell, Timer, Play } from 'lucide-react'
 import type { Exercise } from '@repo/shared/schemas'
 import type { WorkoutPlan } from '@repo/shared/schemas'
 
@@ -54,12 +54,15 @@ export default function LogWorkout() {
   const [showExercisePicker, setShowExercisePicker] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [sessionId, setSessionId] = useState<string | null>(null)
-  const [startTime] = useState<Date>(new Date())
+  const [startTime, setStartTime] = useState<Date>(new Date())
   const [elapsedTime, setElapsedTime] = useState(0)
   const [isTimerRunning, setIsTimerRunning] = useState(false)
   const [restTimer, setRestTimer] = useState(0)
   const [isResting, setIsResting] = useState(false)
   const hasPrefilledRef = useRef(false)
+
+  // Whether we loaded from a template/plan (shows the start button)
+  const hasPrefilledExercises = workoutExercises.length > 0 && !isTimerRunning
 
   // Pre-fill from template or plan when opened via Workouts page
   useEffect(() => {
@@ -116,11 +119,14 @@ export default function LogWorkout() {
   }
 
   const startWorkout = async () => {
+    const now = new Date()
+    setStartTime(now)
+    setElapsedTime(0)
     setIsTimerRunning(true)
     const newSession = await createSession.mutateAsync({
       title: workoutTitle,
       exercises: workoutExercises,
-      startTime: new Date(),
+      startTime: now,
       notes: '',
     })
     setSessionId(newSession.id)
@@ -221,7 +227,11 @@ export default function LogWorkout() {
           <div className="flex items-center gap-4 text-neutral-400">
             <div className="flex items-center gap-2">
               <Timer size={20} />
-              <span className="text-2xl font-mono">{formatTime(elapsedTime)}</span>
+              {isTimerRunning ? (
+                <span className="text-2xl font-mono">{formatTime(elapsedTime)}</span>
+              ) : (
+                <span className="text-2xl font-mono text-neutral-600">0:00</span>
+              )}
             </div>
             {isResting && (
               <div className="flex items-center gap-2 text-orange-500">
@@ -240,16 +250,37 @@ export default function LogWorkout() {
             <X size={20} className="mr-2" />
             Cancel
           </Button>
-          <Button
-            onClick={completeWorkout}
-            disabled={workoutExercises.length === 0}
-            className="bg-green-500 hover:bg-green-600 text-white"
-          >
-            <Check size={20} className="mr-2" />
-            Complete Workout
-          </Button>
+          {isTimerRunning && (
+            <Button
+              onClick={completeWorkout}
+              disabled={workoutExercises.length === 0}
+              className="bg-green-500 hover:bg-green-600 text-white"
+            >
+              <Check size={20} className="mr-2" />
+              Complete Workout
+            </Button>
+          )}
         </div>
       </div>
+
+      {/* Start Workout Banner — shown when exercises are pre-filled but timer hasn't started */}
+      {hasPrefilledExercises && (
+        <Card className="bg-neutral-900 border-blue-500/40 p-6 mb-6 text-center">
+          <p className="text-neutral-300 mb-1 text-lg font-medium">
+            {workoutExercises.length} exercise{workoutExercises.length !== 1 ? 's' : ''} ready to go
+          </p>
+          <p className="text-neutral-500 text-sm mb-5">
+            Tap start when you're ready — the timer will begin
+          </p>
+          <Button
+            onClick={startWorkout}
+            className="bg-blue-500 hover:bg-blue-600 text-white text-lg px-8 py-3 h-auto"
+          >
+            <Play size={22} className="mr-2" />
+            Start Workout
+          </Button>
+        </Card>
+      )}
 
       {/* Exercises */}
       <div className="space-y-6">
@@ -313,12 +344,16 @@ export default function LogWorkout() {
                   </div>
                   <div className="col-span-3">
                     <Button
-                      onClick={() => toggleSetComplete(exerciseIndex, setIndex)}
+                      onClick={() => {
+                        if (!isTimerRunning) return
+                        toggleSetComplete(exerciseIndex, setIndex)
+                      }}
+                      disabled={!isTimerRunning}
                       className={`w-full ${
                         set.completed
                           ? 'bg-green-500 hover:bg-green-600'
                           : 'bg-neutral-800 hover:bg-neutral-700'
-                      }`}
+                      } ${!isTimerRunning ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       {set.completed ? <Check size={16} /> : ''}
                     </Button>

@@ -5,7 +5,7 @@ import {
   where,
   getDocs,
   addDoc,
-  deleteDoc,
+  updateDoc,
   doc,
   serverTimestamp,
   orderBy,
@@ -28,15 +28,17 @@ export function useProgressEntries() {
       )
 
       const snapshot = await getDocs(q)
-      return snapshot.docs.map(doc => {
-        const data = doc.data()
-        return {
-          id: doc.id,
-          ...data,
-          date: data.date?.toDate() || new Date(),
-          createdAt: data.createdAt?.toDate(),
-        } as ProgressEntry & { id: string }
-      })
+      return snapshot.docs
+        .filter(d => !d.data().deletedAt) // filter out soft-deleted
+        .map(doc => {
+          const data = doc.data()
+          return {
+            id: doc.id,
+            ...data,
+            date: data.date?.toDate() || new Date(),
+            createdAt: data.createdAt?.toDate(),
+          } as ProgressEntry & { id: string }
+        })
     },
     enabled: !!auth.currentUser?.uid,
   })
@@ -53,6 +55,7 @@ export function useCreateProgressEntry() {
       const docRef = await addDoc(collection(db, 'progress-entries'), {
         ...entryData,
         userId,
+        deletedAt: null,
         createdAt: serverTimestamp(),
       })
 
@@ -70,17 +73,57 @@ export function useCreateProgressEntry() {
   })
 }
 
+/** Update an existing progress entry (e.g. correct a measurement) */
+export function useUpdateProgressEntry() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string
+      data: Partial<Omit<ProgressEntry, 'id' | 'userId' | 'createdAt'>>
+    }) => {
+      const userId = auth.currentUser?.uid
+      if (!userId) throw new Error('Not authenticated')
+
+      // Remove undefined values
+      const cleanedData = Object.fromEntries(
+        Object.entries(data).filter(([, v]) => v !== undefined)
+      )
+
+      await updateDoc(doc(db, 'progress-entries', id), {
+        ...cleanedData,
+        updatedAt: serverTimestamp(),
+      })
+
+      await logActivity(userId, 'update', 'profile', id, {
+        type: 'progress_entry',
+        updates: Object.keys(cleanedData),
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['progress-entries'] })
+    },
+  })
+}
+
+/** Soft delete: sets deletedAt instead of removing the document */
 export function useDeleteProgressEntry() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (id: string) => {
-      await deleteDoc(doc(db, 'progress-entries', id))
-
       const userId = auth.currentUser?.uid
-      if (userId) {
-        await logActivity(userId, 'delete', 'profile', id)
-      }
+      if (!userId) throw new Error('Not authenticated')
+
+      await updateDoc(doc(db, 'progress-entries', id), {
+        deletedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      })
+
+      await logActivity(userId, 'delete', 'profile', id)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['progress-entries'] })

@@ -27,9 +27,56 @@ export default function UserLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-black text-neutral-100 flex flex-col">
-      {/* Mobile: top bar with menu */}
-      <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between h-14 px-4 border-b border-neutral-800 bg-neutral-950">
+    <div className="fixed inset-0 bg-black text-neutral-100 overflow-hidden">
+      {/* Desktop sidebar - fixed position */}
+      <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:border-r lg:border-neutral-800 lg:bg-neutral-950 lg:p-6 lg:z-40 lg:overflow-y-auto">
+        <div className="mb-8 flex-shrink-0">
+          <h1 className="text-2xl font-bold">Prime Fitness</h1>
+          <p className="text-sm text-neutral-500 truncate mt-1">
+            {profile?.fullname || profile?.username || 'User'}
+          </p>
+        </div>
+        <nav className="space-y-2 flex-1 min-h-0 overflow-y-auto">
+          {navigation.map(item => (
+            <NavLink
+              key={item.name}
+              to={item.href}
+              end={item.end}
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                  isActive
+                    ? 'bg-blue-500 text-white'
+                    : 'text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100'
+                )
+              }
+            >
+              <item.icon size={20} />
+              <span className="font-medium">{item.name}</span>
+            </NavLink>
+          ))}
+        </nav>
+        <div className="border-t border-neutral-800 my-4 flex-shrink-0" />
+        <div className="space-y-2 flex-shrink-0">
+          <Link
+            to="/settings"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100 transition-colors"
+          >
+            <Settings size={20} />
+            <span className="font-medium">Settings</span>
+          </Link>
+          <button
+            onClick={() => signOut()}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100 transition-colors text-left"
+          >
+            <LogOut size={20} />
+            <span className="font-medium">Sign Out</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Mobile header */}
+      <header className="lg:hidden flex-shrink-0 fixed top-0 left-0 right-0 z-30 flex items-center justify-between h-14 px-4 border-b border-neutral-800 bg-neutral-950">
         <button
           type="button"
           onClick={() => setSidebarOpen(true)}
@@ -38,121 +85,87 @@ export default function UserLayout() {
         >
           <Menu size={24} />
         </button>
-        <span className="font-bold text-neutral-100">PrimeFit</span>
+        <span className="font-bold text-neutral-100">Prime Fitness</span>
         <div className="w-10" />
       </header>
 
-      <div className="flex flex-1 min-h-0">
-        {/* Desktop sidebar */}
-        <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:border-r lg:border-neutral-800 lg:bg-neutral-950 lg:p-6 shrink-0">
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold">PrimeFit</h1>
-            <p className="text-sm text-neutral-500 truncate">
+      {/* Mobile drawer */}
+      {sidebarOpen && (
+        <>
+          <div
+            className="lg:hidden fixed inset-0 z-40 bg-black/60"
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
+          />
+          <aside className="lg:hidden fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-neutral-950 border-r border-neutral-800 p-6 flex flex-col overflow-y-auto">
+            <div className="flex items-center justify-between mb-8 flex-shrink-0">
+              <h1 className="text-xl font-bold">Prime Fitness</h1>
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(false)}
+                className="p-2 rounded-lg text-neutral-400 hover:text-neutral-100"
+                aria-label="Close menu"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <p className="text-sm text-neutral-500 mb-4 truncate flex-shrink-0">
               {profile?.fullname || profile?.username || 'User'}
             </p>
-          </div>
-          <nav className="space-y-2 flex-1">
-            {navigation.map(item => (
-              <NavLink
-                key={item.name}
-                to={item.href}
-                end={item.end}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
-                    isActive
-                      ? 'bg-blue-500 text-white'
-                      : 'text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100'
-                  )
-                }
+            <nav className="space-y-1 flex-1 overflow-y-auto">
+              {navigation.map(item => (
+                <NavLink
+                  key={item.name}
+                  to={item.href}
+                  end={item.end}
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                      isActive
+                        ? 'bg-blue-500 text-white'
+                        : 'text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100'
+                    )
+                  }
+                >
+                  <item.icon size={20} />
+                  <span className="font-medium">{item.name}</span>
+                </NavLink>
+              ))}
+            </nav>
+            <div className="border-t border-neutral-800 my-4 flex-shrink-0" />
+            <div className="space-y-1 flex-shrink-0">
+              <Link
+                to="/settings"
+                onClick={() => setSidebarOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100"
               >
-                <item.icon size={20} />
-                <span className="font-medium">{item.name}</span>
-              </NavLink>
-            ))}
-            <div className="border-t border-neutral-800 my-4" />
-            <Link
-              to="/settings"
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100 transition-colors"
-            >
-              <Settings size={20} />
-              <span className="font-medium">Settings</span>
-            </Link>
-            <button
-              onClick={() => signOut()}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100 transition-colors text-left"
-            >
-              <LogOut size={20} />
-              <span className="font-medium">Sign Out</span>
-            </button>
-          </nav>
-        </aside>
+                <Settings size={20} />
+                <span className="font-medium">Settings</span>
+              </Link>
+              <button
+                onClick={() => signOut()}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100 text-left"
+              >
+                <LogOut size={20} />
+                <span className="font-medium">Sign Out</span>
+              </button>
+            </div>
+          </aside>
+        </>
+      )}
 
-        {/* Mobile drawer */}
-        {sidebarOpen && (
-          <>
-            <div
-              className="lg:hidden fixed inset-0 z-40 bg-black/60"
-              onClick={() => setSidebarOpen(false)}
-              aria-hidden
-            />
-            <aside className="lg:hidden fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-neutral-950 border-r border-neutral-800 p-6 flex flex-col animate-slide-in-left">
-              <div className="flex items-center justify-between mb-8">
-                <h1 className="text-xl font-bold">PrimeFit</h1>
-                <button
-                  type="button"
-                  onClick={() => setSidebarOpen(false)}
-                  className="p-2 rounded-lg text-neutral-400 hover:text-neutral-100"
-                  aria-label="Close menu"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-              <p className="text-sm text-neutral-500 mb-4 truncate">
-                {profile?.fullname || profile?.username || 'User'}
-              </p>
-              <nav className="space-y-1 flex-1">
-                {navigation.map(item => (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100"
-                  >
-                    <item.icon size={20} />
-                    <span className="font-medium">{item.name}</span>
-                  </Link>
-                ))}
-                <div className="border-t border-neutral-800 my-4" />
-                <Link
-                  to="/settings"
-                  onClick={() => setSidebarOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100"
-                >
-                  <Settings size={20} />
-                  <span className="font-medium">Settings</span>
-                </Link>
-                <button
-                  onClick={() => signOut()}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100 text-left"
-                >
-                  <LogOut size={20} />
-                  <span className="font-medium">Sign Out</span>
-                </button>
-              </nav>
-            </aside>
-          </>
-        )}
-
-        {/* Main content: padding for bottom nav on mobile */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
+      {/* Main content area - fills remaining space */}
+      <main className="fixed inset-0 lg:left-64 pt-14 lg:pt-0 pb-16 lg:pb-0 overflow-y-auto bg-black">
+        <div className="p-4 sm:p-6 lg:p-8 min-h-full">
           <Outlet />
-        </main>
-      </div>
+        </div>
+      </main>
 
       {/* Mobile bottom nav */}
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around h-16 border-t border-neutral-800 bg-neutral-950/95 backdrop-blur safe-area-pb"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around h-16 border-t border-neutral-800 bg-neutral-950/95 backdrop-blur"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         aria-label="Main navigation"
       >
         {navigation.map(item => (
@@ -168,7 +181,7 @@ export default function UserLayout() {
             }
           >
             <item.icon size={22} strokeWidth={2} />
-            <span className="truncate max-w-full">{item.name}</span>
+            <span className="truncate max-w-full px-1">{item.name}</span>
           </NavLink>
         ))}
       </nav>

@@ -36,14 +36,14 @@ export default function AdminDashboard() {
   ]
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-background">
       <div className="w-full px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
         {/* Header */}
         <div className="mb-4 sm:mb-6">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2 text-neutral-100">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2 text-foreground">
             Admin Dashboard
           </h1>
-          <p className="text-sm sm:text-base text-neutral-400">
+          <p className="text-sm sm:text-base text-muted-foreground">
             Welcome back, {profile?.fullname || 'Admin'}
           </p>
         </div>
@@ -53,15 +53,15 @@ export default function AdminDashboard() {
           {statCards.map((stat, index) => (
             <Card
               key={index}
-              className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-4 sm:p-5 lg:p-6 hover:bg-neutral-900/70 transition-all duration-300"
+              className="rounded-lg border border-border bg-card/50 p-4 sm:p-5 lg:p-6 hover:bg-card/70 transition-all duration-300"
             >
               <div className="flex items-start justify-between mb-3 sm:mb-4">
                 <div className="flex-1">
-                  <h3 className="text-xs sm:text-sm font-medium text-neutral-500 uppercase tracking-wider mb-2">
+                  <h3 className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider mb-2">
                     {stat.title}
                   </h3>
                   <div className="flex items-baseline gap-2">
-                    <p className="text-2xl sm:text-3xl font-bold text-neutral-100">
+                    <p className="text-2xl sm:text-3xl font-bold text-foreground">
                       {isLoading ? (
                         <Loader2 className="h-6 w-6 sm:h-7 sm:w-7 animate-spin" />
                       ) : (
@@ -93,44 +93,44 @@ export default function AdminDashboard() {
 
         {/* Quick Actions - Mobile Optimized */}
         <div className="mt-6 sm:mt-8">
-          <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-neutral-100">
+          <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-foreground">
             Quick Actions
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             <Link to="/admin/users">
-              <Card className="bg-neutral-900 border-neutral-800 p-4 sm:p-5 hover:border-blue-500/50 transition-all cursor-pointer active:scale-95 h-full">
+              <Card className="bg-card border-border p-4 sm:p-5 hover:border-orange-500/50 transition-all cursor-pointer active:scale-95 h-full">
                 <Users className="text-blue-500 mb-2 sm:mb-3" size={24} />
-                <h3 className="font-semibold text-sm sm:text-base text-neutral-100">Users</h3>
-                <p className="text-xs text-neutral-500 mt-1">Manage all users</p>
+                <h3 className="font-semibold text-sm sm:text-base text-foreground">Users</h3>
+                <p className="text-xs text-muted-foreground mt-1">Manage all users</p>
               </Card>
             </Link>
             <Link to="/admin/exercises">
               <Card className="bg-neutral-900 border-neutral-800 p-4 sm:p-5 hover:border-purple-500/50 transition-all cursor-pointer active:scale-95 h-full">
                 <Award className="text-purple-500 mb-2 sm:mb-3" size={24} />
-                <h3 className="font-semibold text-sm sm:text-base text-neutral-100">Exercises</h3>
-                <p className="text-xs text-neutral-500 mt-1">Exercise library</p>
+                <h3 className="font-semibold text-sm sm:text-base text-foreground">Exercises</h3>
+                <p className="text-xs text-muted-foreground mt-1">Exercise library</p>
               </Card>
             </Link>
             <Link to="/admin/workout-templates">
               <Card className="bg-neutral-900 border-neutral-800 p-4 sm:p-5 hover:border-green-500/50 transition-all cursor-pointer active:scale-95 h-full">
                 <Activity className="text-green-500 mb-2 sm:mb-3" size={24} />
-                <h3 className="font-semibold text-sm sm:text-base text-neutral-100">Templates</h3>
-                <p className="text-xs text-neutral-500 mt-1">Workout plans</p>
+                <h3 className="font-semibold text-sm sm:text-base text-foreground">Templates</h3>
+                <p className="text-xs text-muted-foreground mt-1">Workout plans</p>
               </Card>
             </Link>
             <Link to="/admin/activity-logs">
               <Card className="bg-neutral-900 border-neutral-800 p-4 sm:p-5 hover:border-orange-500/50 transition-all cursor-pointer active:scale-95 h-full">
                 <TrendingUp className="text-orange-500 mb-2 sm:mb-3" size={24} />
-                <h3 className="font-semibold text-sm sm:text-base text-neutral-100">Logs</h3>
-                <p className="text-xs text-neutral-500 mt-1">Activity logs</p>
+                <h3 className="font-semibold text-sm sm:text-base text-foreground">Logs</h3>
+                <p className="text-xs text-muted-foreground mt-1">Activity logs</p>
               </Card>
             </Link>
           </div>
         </div>
 
         {/* Recent Activity Preview */}
-        <Card className="mt-6 sm:mt-8 bg-neutral-900 border-neutral-800 p-4 sm:p-6">
-          <h2 className="text-lg sm:text-xl font-bold mb-4 text-neutral-100">
+        <Card className="mt-6 sm:mt-8 bg-card border-border p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-bold mb-4 text-foreground">
             Recent System Activity
           </h2>
           <div className="space-y-3">
@@ -139,7 +139,7 @@ export default function AdminDashboard() {
                 <Loader2 className="h-6 w-6 animate-spin text-neutral-500" />
               </div>
             ) : (
-              <p className="text-sm text-neutral-500 text-center py-8">
+              <p className="text-sm text-muted-foreground text-center py-8">
                 View detailed activity logs in the Activity Logs section
               </p>
             )}
