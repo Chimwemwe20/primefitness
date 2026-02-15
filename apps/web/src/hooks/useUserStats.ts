@@ -1,6 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore'
+import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore'
 import { db, auth } from '../lib/firebase'
+
+/** Safely convert a Firestore Timestamp (or Date, or null) to a Date */
+function toDate(value: unknown): Date | undefined {
+  if (!value) return undefined
+  if (value instanceof Timestamp) return value.toDate()
+  if (value instanceof Date) return value
+  if (typeof value === 'string' || typeof value === 'number') return new Date(value)
+  return undefined
+}
 
 export function useUserStats() {
   return useQuery({
@@ -9,45 +18,35 @@ export function useUserStats() {
       const userId = auth.currentUser?.uid
       if (!userId) throw new Error('Not authenticated')
 
-      // Get total workouts
+      // Fetch all sessions for this user in one read (no orderBy = no composite index needed)
       const sessionsRef = collection(db, 'workout-sessions')
-      const totalQuery = query(sessionsRef, where('userId', '==', userId))
-      const totalSnapshot = await getDocs(totalQuery)
-      const totalWorkouts = totalSnapshot.size
+      const userQuery = query(sessionsRef, where('userId', '==', userId))
+      const snapshot = await getDocs(userQuery)
 
-      // Get workouts this week
+      // Filter out soft-deleted sessions once, reuse everywhere
+      const activeDocs = snapshot.docs.filter(d => !d.data().deletedAt)
+      const totalWorkouts = activeDocs.length
+
+      // --- Workouts this week ---
       const oneWeekAgo = new Date()
       oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
+      const workoutsThisWeek = activeDocs.filter(d => {
+        const start = toDate(d.data().startTime)
+        return start && start >= oneWeekAgo
+      }).length
 
-      const weekQuery = query(
-        sessionsRef,
-        where('userId', '==', userId),
-        where('startTime', '>=', oneWeekAgo)
-      )
-      const weekSnapshot = await getDocs(weekQuery)
-      const workoutsThisWeek = weekSnapshot.size
-
-      // Calculate streak
-      const recentQuery = query(
-        sessionsRef,
-        where('userId', '==', userId),
-        orderBy('startTime', 'desc')
-      )
-      const recentSnapshot = await getDocs(recentQuery)
+      // --- Streak ---
+      const sessionDates = activeDocs
+        .map(d => toDate(d.data().startTime))
+        .filter((d): d is Date => !!d)
+        .sort((a, b) => b.getTime() - a.getTime())
 
       let streak = 0
-      if (!recentSnapshot.empty) {
-        const sessions = recentSnapshot.docs
-          .map(doc => {
-            const data = doc.data()
-            return data.startTime?.toDate() || new Date()
-          })
-          .sort((a, b) => b.getTime() - a.getTime())
-
+      if (sessionDates.length > 0) {
         let lastDate = new Date()
         lastDate.setHours(0, 0, 0, 0)
 
-        for (const sessionDate of sessions) {
+        for (const sessionDate of sessionDates) {
           const sessionDay = new Date(sessionDate)
           sessionDay.setHours(0, 0, 0, 0)
 
@@ -64,7 +63,7 @@ export function useUserStats() {
         }
       }
 
-      // Get active goals
+      // --- Active goals ---
       const goalsRef = collection(db, 'goals')
       const goalsQuery = query(
         goalsRef,
@@ -74,11 +73,10 @@ export function useUserStats() {
       const goalsSnapshot = await getDocs(goalsQuery)
       const activeGoals = goalsSnapshot.size
 
-      // Get personal records (max weight for each exercise)
-      const personalRecords: Array<{ exercise: string; value: string }> = []
+      // --- Personal records (max weight per exercise) ---
       const exerciseMaxes = new Map<string, number>()
 
-      totalSnapshot.docs.forEach(doc => {
+      activeDocs.forEach(doc => {
         const session = doc.data()
         const exercises = session.exercises as
           | Array<{ name: string; sets?: Array<{ weight?: number; completed?: boolean }> }>
@@ -95,11 +93,9 @@ export function useUserStats() {
         })
       })
 
+      const personalRecords: Array<{ exercise: string; value: string }> = []
       exerciseMaxes.forEach((weight, exercise) => {
-        personalRecords.push({
-          exercise,
-          value: `${weight} kg`,
-        })
+        personalRecords.push({ exercise, value: `${weight} kg` })
       })
 
       return {
