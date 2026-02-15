@@ -16,6 +16,7 @@ export const GoalSchema = z.object({
   completedAt: z.union([z.date(), z.string(), z.any()]).optional(),
   createdAt: z.union([z.date(), z.string(), z.any()]).optional(),
   updatedAt: z.union([z.date(), z.string(), z.any()]).optional(),
+  deletedAt: z.union([z.date(), z.string(), z.any()]).optional(),
 })
 
 export type Goal = z.infer<typeof GoalSchema>
