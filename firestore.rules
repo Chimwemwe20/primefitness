@@ -87,6 +87,16 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
     
+    // Workout Templates (admin-created, public templates for users)
+    match /workout-templates/{templateId} {
+      allow read: if isAuthenticated() && 
+                     (resource.data.isPublic == true || isAdminOrCoach());
+      allow create: if isAdminOrCoach() && 
+                       request.resource.data.createdBy == request.auth.uid;
+      allow update: if isAdminOrCoach();
+      allow delete: if isAdmin();
+    }
+    
     // Progress Entries
     match /progress-entries/{entryId} {
       allow read: if isAuthenticated() && 

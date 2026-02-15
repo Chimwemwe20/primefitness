@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useExercises } from '../../hooks/useExercises.ts'
 import { useCreateWorkoutSession, useUpdateWorkoutSession } from '../../hooks/useWorkoutSessions'
+import { usePublicWorkoutTemplates, useWorkoutPlans } from '../../hooks/useWorkoutPlans'
 import { Card } from '@repo/ui/Card'
 import { Button } from '@repo/ui/Button'
 import { Input } from '@repo/ui/Input'
 import { Plus, Trash2, Check, Pause, X, Search, Dumbbell, Timer } from 'lucide-react'
 import type { Exercise } from '@repo/shared/schemas'
+import type { WorkoutPlan } from '@repo/shared/schemas'
 
 interface ExerciseSet {
   reps: number
@@ -20,8 +23,29 @@ interface WorkoutExercise {
   sets: ExerciseSet[]
 }
 
+function planToLogExercises(plan: WorkoutPlan & { id: string }): WorkoutExercise[] {
+  return plan.exercises.map(ex => {
+    const repsNum = typeof ex.reps === 'number' ? ex.reps : parseInt(String(ex.reps), 10) || 0
+    const setCount = typeof ex.sets === 'number' ? Math.max(1, ex.sets) : 1
+    return {
+      name: ex.name,
+      sets: Array.from({ length: setCount }, () => ({
+        reps: repsNum,
+        weight: 0,
+        completed: false,
+      })),
+    }
+  })
+}
+
 export default function LogWorkout() {
+  const [searchParams] = useSearchParams()
+  const templateId = searchParams.get('templateId')
+  const planId = searchParams.get('planId')
+
   const { data: exercises } = useExercises()
+  const { data: templates } = usePublicWorkoutTemplates()
+  const { data: userPlans } = useWorkoutPlans()
   const createSession = useCreateWorkoutSession()
   const updateSession = useUpdateWorkoutSession()
 
@@ -35,6 +59,27 @@ export default function LogWorkout() {
   const [isTimerRunning, setIsTimerRunning] = useState(false)
   const [restTimer, setRestTimer] = useState(0)
   const [isResting, setIsResting] = useState(false)
+  const hasPrefilledRef = useRef(false)
+
+  // Pre-fill from template or plan when opened via Workouts page
+  useEffect(() => {
+    if (hasPrefilledRef.current) return
+    if (templateId && templates?.length) {
+      const template = templates.find(t => t.id === templateId)
+      if (template) {
+        hasPrefilledRef.current = true
+        setWorkoutTitle(template.title)
+        setWorkoutExercises(planToLogExercises(template))
+      }
+    } else if (planId && userPlans?.length) {
+      const plan = userPlans.find(p => p.id === planId)
+      if (plan) {
+        hasPrefilledRef.current = true
+        setWorkoutTitle(plan.title)
+        setWorkoutExercises(planToLogExercises(plan))
+      }
+    }
+  }, [templateId, planId, templates, userPlans])
 
   // Timer for workout duration
   useEffect(() => {

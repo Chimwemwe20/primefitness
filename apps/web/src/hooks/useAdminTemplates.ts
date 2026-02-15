@@ -11,8 +11,22 @@ import {
   orderBy,
 } from 'firebase/firestore'
 import { db, auth } from '../lib/firebase'
-import type { WorkoutPlan } from '@repo/shared/schemas'
+import type { WorkoutPlan, WorkoutExercise } from '@repo/shared/schemas'
+import { WorkoutPlanSchema, WorkoutExerciseSchema } from '@repo/shared/schemas'
 import { logActivity } from '../lib/activity'
+
+/** Normalize exercise to schema shape (only allowed fields) for Firestore */
+function normalizeExercise(ex: WorkoutExercise): Record<string, unknown> {
+  const parsed = WorkoutExerciseSchema.parse({
+    name: ex.name,
+    sets: ex.sets,
+    reps: ex.reps,
+    ...(ex.weight !== undefined && { weight: ex.weight }),
+    ...(ex.rest !== undefined && { rest: ex.rest }),
+    ...(ex.notes !== undefined && { notes: ex.notes }),
+  })
+  return parsed as Record<string, unknown>
+}
 
 export function useAdminTemplates() {
   return useQuery({
@@ -41,18 +55,31 @@ export function useCreateTemplate() {
       const userId = auth.currentUser?.uid
       if (!userId) throw new Error('Not authenticated')
 
-      const docRef = await addDoc(collection(db, 'workout-templates'), {
-        ...templateData,
-        userId: 'admin', // Templates are owned by system/admin
+      // Validate and normalize with schema (adds userId/status for validation)
+      const parsed = WorkoutPlanSchema.parse({
+        userId: 'admin',
+        title: templateData.title,
+        description: templateData.description ?? '',
+        exercises: templateData.exercises,
         status: 'active',
-        isPublic: true, // Templates are public by default
+      })
+
+      const exercisesForFirestore = parsed.exercises.map(normalizeExercise)
+
+      const docRef = await addDoc(collection(db, 'workout-templates'), {
+        title: parsed.title,
+        description: parsed.description || null,
+        exercises: exercisesForFirestore,
+        userId: 'admin',
+        status: 'active',
+        isPublic: true,
         createdBy: userId,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       })
 
       await logActivity(userId, 'create', 'system', docRef.id, {
-        templateTitle: templateData.title,
+        templateTitle: parsed.title,
       })
 
       return { id: docRef.id, ...templateData }

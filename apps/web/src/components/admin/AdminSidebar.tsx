@@ -1,5 +1,13 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Users, Activity, Settings, LogOut } from 'lucide-react'
+import {
+  LayoutDashboard,
+  Users,
+  Dumbbell,
+  FileText,
+  Activity,
+  Settings,
+  LogOut,
+} from 'lucide-react'
 import { useAuth } from '../../providers/AuthContext'
 import { cn } from '@repo/ui/utils'
 
@@ -17,6 +25,16 @@ export default function AdminSidebar() {
       to: '/admin/users',
       icon: Users,
       label: 'User Management',
+    },
+    {
+      to: '/admin/exercises',
+      icon: Dumbbell,
+      label: 'Exercise Management',
+    },
+    {
+      to: '/admin/workout-templates',
+      icon: FileText,
+      label: 'Workout Templates',
     },
     {
       to: '/admin/activity-logs',
