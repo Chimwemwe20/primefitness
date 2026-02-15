@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useUsers, useUpdateUser } from '../../hooks/useUsers'
+import { useUsers, useUpdateUser, useSoftDeleteUser } from '../../hooks/useUsers'
 import { Card } from '@repo/ui/Card'
 import { Button } from '@repo/ui/Button'
 import { Input } from '@repo/ui/Input'
@@ -13,11 +13,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
+  Trash2,
 } from 'lucide-react'
 
 export default function UserManagement() {
   const { data: users, isLoading } = useUsers()
   const updateUser = useUpdateUser()
+  const softDeleteUser = useSoftDeleteUser()
   const toast = useToast()
 
   const [searchQuery, setSearchQuery] = useState('')
@@ -29,6 +31,8 @@ export default function UserManagement() {
     uid: string
     newRole: 'admin' | 'user'
   } | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<string | null>(null)
 
   const handleRoleChangeClick = (uid: string, newRole: 'admin' | 'user') => {
     setPendingRoleChange({ uid, newRole })
@@ -48,6 +52,24 @@ export default function UserManagement() {
       toast.error('Failed to update user role. Please try again.')
     } finally {
       setPendingRoleChange(null)
+    }
+  }
+
+  const handleDeleteClick = (uid: string) => {
+    setUserToDelete(uid)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!userToDelete) return
+    try {
+      await softDeleteUser.mutateAsync(userToDelete)
+      toast.success('User deactivated successfully!')
+    } catch (error) {
+      console.error('Failed to deactivate user:', error)
+      toast.error('Failed to deactivate user. Please try again.')
+    } finally {
+      setUserToDelete(null)
     }
   }
 
@@ -102,7 +124,7 @@ export default function UserManagement() {
           <p className="text-sm sm:text-base text-neutral-400">Manage user roles and permissions</p>
         </div>
 
-        {/* Filters - Mobile First */}
+        {/* Filters */}
         <Card className="bg-neutral-900 border-neutral-800 p-4 sm:p-6 mb-4 sm:mb-6">
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             {/* Search */}
@@ -116,14 +138,14 @@ export default function UserManagement() {
                 value={searchQuery}
                 onChange={e => {
                   setSearchQuery(e.target.value)
-                  setCurrentPage(1) // Reset to first page
+                  setCurrentPage(1)
                 }}
                 className="pl-10 bg-neutral-800 border-neutral-700 h-11 text-base"
               />
             </div>
 
             {/* Role Filter */}
-            <div className="relative sm:w-48">
+            <div className="relative sm:w-40">
               <Filter
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none"
                 size={18}
@@ -223,6 +245,14 @@ export default function UserManagement() {
                                 User
                               </Button>
                             )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteClick(user.uid)}
+                              className="h-8 text-xs border-neutral-700 hover:border-red-500/50 hover:text-red-400"
+                            >
+                              <Trash2 size={14} />
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -292,6 +322,14 @@ export default function UserManagement() {
                       User
                     </Button>
                   )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDeleteClick(user.uid)}
+                    className="h-9 text-xs border-neutral-700 hover:border-red-500/50 hover:text-red-400"
+                  >
+                    <Trash2 size={14} />
+                  </Button>
                 </div>
               </Card>
             )
@@ -345,6 +383,18 @@ export default function UserManagement() {
           cancelText="Cancel"
           onConfirm={handleRoleChangeConfirm}
           variant="default"
+        />
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          title="Deactivate User"
+          description="Are you sure you want to deactivate this user? Their account will be marked as deleted but can be restored later."
+          confirmText="Deactivate"
+          cancelText="Cancel"
+          onConfirm={handleDeleteConfirm}
+          variant="destructive"
         />
       </div>
     </div>

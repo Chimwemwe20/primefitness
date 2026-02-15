@@ -1,9 +1,25 @@
 import { useState } from 'react'
-import { useProgressEntries, useCreateProgressEntry } from '../../hooks/useProgress'
+import {
+  useProgressEntries,
+  useCreateProgressEntry,
+  useDeleteProgressEntry,
+} from '../../hooks/useProgress'
 import { Button } from '@repo/ui/Button'
 import { Card } from '@repo/ui/Card'
 import { Input } from '@repo/ui/Input'
-import { Loader2, TrendingUp, TrendingDown, Plus, X, Scale, Activity, Calendar } from 'lucide-react'
+import { Dialog } from '@repo/ui/Dialog'
+import { useToast } from '@repo/ui/useToast'
+import {
+  Loader2,
+  TrendingUp,
+  TrendingDown,
+  Plus,
+  X,
+  Scale,
+  Activity,
+  Calendar,
+  Trash2,
+} from 'lucide-react'
 import {
   LineChart,
   Line,
@@ -16,8 +32,12 @@ import {
 
 export default function Progress() {
   const { data: entries, isLoading } = useProgressEntries()
+  const deleteEntry = useDeleteProgressEntry()
+  const toast = useToast()
   const [showAddModal, setShowAddModal] = useState(false)
   const [selectedMetric, setSelectedMetric] = useState<'weight' | 'bodyFat'>('weight')
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [entryToDelete, setEntryToDelete] = useState<string | null>(null)
 
   const latestEntry = entries?.[0]
   const previousEntry = entries?.[1]
@@ -28,7 +48,6 @@ export default function Progress() {
   const bodyFatChange =
     latestEntry && previousEntry ? (latestEntry.bodyFat || 0) - (previousEntry.bodyFat || 0) : 0
 
-  // Prepare chart data
   const chartData = entries
     ?.slice(0, 30)
     .reverse()
@@ -37,6 +56,25 @@ export default function Progress() {
       weight: entry.weight || 0,
       bodyFat: entry.bodyFat || 0,
     }))
+
+  const handleDeleteClick = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    setEntryToDelete(id)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!entryToDelete) return
+    try {
+      await deleteEntry.mutateAsync(entryToDelete)
+      toast.success('Progress entry deleted!')
+    } catch (error) {
+      console.error('Failed to delete entry:', error)
+      toast.error('Failed to delete entry.')
+    } finally {
+      setEntryToDelete(null)
+    }
+  }
 
   return (
     <div>
@@ -101,16 +139,8 @@ export default function Progress() {
               <Calendar className="text-green-500" size={24} />
             </div>
           </div>
-          <p className="text-sm text-neutral-400 mb-1">Last Updated</p>
-          <p className="text-lg font-bold">
-            {latestEntry
-              ? new Date(latestEntry.date).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })
-              : '—'}
-          </p>
+          <p className="text-sm text-neutral-400 mb-1">Total Entries</p>
+          <p className="text-3xl font-bold">{entries?.length || 0}</p>
         </Card>
       </div>
 
@@ -174,7 +204,44 @@ export default function Progress() {
         )}
       </Card>
 
-      {/* Measurements History */}
+      {/* Recent Entries List */}
+      {entries && entries.length > 0 && (
+        <Card className="bg-neutral-900 border-neutral-800 p-6 mb-8">
+          <h2 className="text-xl font-bold mb-4">Recent Entries</h2>
+          <div className="space-y-3">
+            {entries.slice(0, 10).map(entry => (
+              <div
+                key={entry.id}
+                className="flex items-center justify-between p-3 rounded-lg bg-neutral-800/50 hover:bg-neutral-800 transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="text-sm text-neutral-400">
+                    {new Date(entry.date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </div>
+                  <div className="flex gap-4 text-sm">
+                    {entry.weight && <span className="text-neutral-200">{entry.weight} kg</span>}
+                    {entry.bodyFat && <span className="text-neutral-400">{entry.bodyFat}% BF</span>}
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={e => handleDeleteClick(e, entry.id)}
+                  className="h-8 w-8 p-0 hover:text-red-400"
+                >
+                  <Trash2 size={14} />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Measurements */}
       {latestEntry?.measurements && (
         <Card className="bg-neutral-900 border-neutral-800 p-6 mb-8">
           <h2 className="text-xl font-bold mb-6">Body Measurements</h2>
@@ -215,12 +282,25 @@ export default function Progress() {
 
       {/* Add Entry Modal */}
       {showAddModal && <AddProgressModal onClose={() => setShowAddModal(false)} />}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Progress Entry"
+        description="Are you sure you want to delete this progress entry? It will be removed from your tracking history."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleDeleteConfirm}
+        variant="destructive"
+      />
     </div>
   )
 }
 
 function AddProgressModal({ onClose }: { onClose: () => void }) {
   const createEntryMutation = useCreateProgressEntry()
+  const toast = useToast()
   const [formData, setFormData] = useState({
     weight: '',
     bodyFat: '',
@@ -247,10 +327,11 @@ function AddProgressModal({ onClose }: { onClose: () => void }) {
         },
         notes: formData.notes || undefined,
       })
+      toast.success('Progress entry saved!')
       onClose()
     } catch (error) {
       console.error('Failed to create progress entry:', error)
-      alert('Failed to save progress entry')
+      toast.error('Failed to save progress entry.')
     }
   }
 

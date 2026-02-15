@@ -115,7 +115,7 @@ export function Dialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isProcessing || isLoading}
-              className="border-neutral-700"
+              className="border-neutral-700 text-neutral-300 hover:text-neutral-100"
             >
               {cancelText}
             </Button>

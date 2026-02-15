@@ -14,21 +14,24 @@ export function useRecentWorkouts() {
         collection(db, 'workout-sessions'),
         where('userId', '==', userId),
         orderBy('startTime', 'desc'),
-        limit(10)
+        limit(20) // fetch more to account for soft-deleted
       )
 
       const snapshot = await getDocs(q)
 
-      return snapshot.docs.map(doc => {
-        const data = doc.data()
-        return {
-          id: doc.id,
-          ...data,
-          startTime: data.startTime?.toDate() || new Date(),
-          endTime: data.endTime?.toDate(),
-          completedAt: data.completedAt?.toDate(),
-        } as WorkoutSession & { id: string }
-      })
+      return snapshot.docs
+        .filter(d => !d.data().deletedAt)
+        .slice(0, 10)
+        .map(doc => {
+          const data = doc.data()
+          return {
+            id: doc.id,
+            ...data,
+            startTime: data.startTime?.toDate() || new Date(),
+            endTime: data.endTime?.toDate(),
+            completedAt: data.completedAt?.toDate(),
+          } as WorkoutSession & { id: string }
+        })
     },
     enabled: !!auth.currentUser?.uid,
   })

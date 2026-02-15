@@ -1,15 +1,21 @@
 import { useState } from 'react'
-import { useWorkoutPlans } from '../../hooks/useWorkoutPlans'
+import { useWorkoutPlans, useDeleteWorkoutPlan } from '../../hooks/useWorkoutPlans'
 import { usePublicWorkoutTemplates } from '../../hooks/useWorkoutPlans'
 import { Button } from '@repo/ui/Button'
 import { Card } from '@repo/ui/Card'
 import { Input } from '@repo/ui/Input'
-import { Loader2, Dumbbell, Plus, Search, TrendingUp } from 'lucide-react'
+import { Dialog } from '@repo/ui/Dialog'
+import { useToast } from '@repo/ui/useToast'
+import { Loader2, Dumbbell, Plus, Search, TrendingUp, Trash2 } from 'lucide-react'
 
 export default function Workouts() {
   const { data: userPlans, isLoading: plansLoading } = useWorkoutPlans()
   const { data: templates, isLoading: templatesLoading } = usePublicWorkoutTemplates()
+  const deleteWorkoutPlan = useDeleteWorkoutPlan()
+  const toast = useToast()
   const [searchQuery, setSearchQuery] = useState('')
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [planToDelete, setPlanToDelete] = useState<string | null>(null)
 
   const filteredPlans = userPlans?.filter(plan =>
     plan.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -18,6 +24,25 @@ export default function Workouts() {
   const filteredTemplates = templates?.filter(template =>
     template.title.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  const handleDeletePlanClick = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    setPlanToDelete(id)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!planToDelete) return
+    try {
+      await deleteWorkoutPlan.mutateAsync(planToDelete)
+      toast.success('Workout plan deleted successfully!')
+    } catch (error) {
+      console.error('Failed to delete workout plan:', error)
+      toast.error('Failed to delete workout plan.')
+    } finally {
+      setPlanToDelete(null)
+    }
+  }
 
   return (
     <div>
@@ -60,13 +85,21 @@ export default function Workouts() {
             {filteredPlans.map(plan => (
               <Card
                 key={plan.id}
-                className="bg-neutral-900 border-neutral-800 p-6 hover:border-neutral-700 transition-colors cursor-pointer"
+                className="bg-neutral-900 border-neutral-800 p-6 hover:border-neutral-700 transition-colors cursor-pointer group relative"
                 onClick={() => (window.location.href = `/workouts/log?planId=${plan.id}`)}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 rounded-lg bg-blue-500/20">
                     <Dumbbell className="text-blue-500" size={24} />
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={e => handleDeletePlanClick(e, plan.id)}
+                    className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-400"
+                  >
+                    <Trash2 size={14} />
+                  </Button>
                 </div>
                 <h3 className="font-bold text-lg mb-2">{plan.title}</h3>
                 {plan.description && (
@@ -131,6 +164,18 @@ export default function Workouts() {
           </Card>
         )}
       </div>
+
+      {/* Delete Plan Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Workout Plan"
+        description="Are you sure you want to delete this workout plan? It can be recovered later if needed."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleDeleteConfirm}
+        variant="destructive"
+      />
     </div>
   )
 }

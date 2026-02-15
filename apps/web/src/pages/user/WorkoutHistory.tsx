@@ -140,12 +140,12 @@ export default function WorkoutHistory() {
         </Card>
       )}
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Confirmation Dialog — updated text for soft delete */}
       <Dialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         title="Delete Workout"
-        description="Are you sure you want to delete this workout? This action cannot be undone."
+        description="Are you sure you want to delete this workout? It will be removed from your history."
         confirmText="Delete"
         cancelText="Cancel"
         onConfirm={handleDeleteConfirm}

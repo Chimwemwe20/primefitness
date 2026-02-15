@@ -275,7 +275,6 @@ export default function WorkoutDetail() {
                   </table>
                 </div>
 
-                {/* Set Notes */}
                 {exercise.sets?.some(set => set.notes) && (
                   <div className="mt-4 space-y-2">
                     {exercise.sets?.map((set, setIndex) =>
@@ -332,7 +331,7 @@ export default function WorkoutDetail() {
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         title="Delete Workout"
-        description={`Are you sure you want to delete "${workout?.title}"? This action cannot be undone.`}
+        description={`Are you sure you want to delete "${workout?.title}"? It will be removed from your history.`}
         confirmText="Delete"
         cancelText="Cancel"
         onConfirm={handleDeleteConfirm}

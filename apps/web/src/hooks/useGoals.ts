@@ -4,12 +4,11 @@ import {
   query,
   where,
   getDocs,
-  doc,
   addDoc,
   updateDoc,
-  deleteDoc,
+  doc,
   serverTimestamp,
-  orderBy,
+  Timestamp,
 } from 'firebase/firestore'
 import { db, auth } from '../lib/firebase'
 import type { Goal } from '@repo/shared/schemas'
@@ -22,25 +21,41 @@ export function useGoals() {
       const userId = auth.currentUser?.uid
       if (!userId) throw new Error('Not authenticated')
 
-      const q = query(
-        collection(db, 'goals'),
-        where('userId', '==', userId),
-        orderBy('createdAt', 'desc')
-      )
+      const q = query(collection(db, 'goals'), where('userId', '==', userId))
 
       const snapshot = await getDocs(q)
-      return snapshot.docs.map(doc => {
-        const data = doc.data()
+      const data = snapshot.docs.map(docSnapshot => {
+        const data = docSnapshot.data()
+
+        // Helper to safely convert Firestore timestamp/string/date to Date object
+        const toDate = (val: unknown): Date | undefined => {
+          if (!val) return undefined
+          if (val instanceof Timestamp) return val.toDate()
+          if (val instanceof Date) return val
+          if (typeof val === 'string') return new Date(val)
+          return undefined
+        }
+
         return {
-          id: doc.id,
+          id: docSnapshot.id,
           ...data,
-          startDate: data.startDate?.toDate() || new Date(),
-          targetDate: data.targetDate?.toDate() || new Date(),
-          completedAt: data.completedAt?.toDate(),
-          createdAt: data.createdAt?.toDate(),
-          updatedAt: data.updatedAt?.toDate(),
-        } as Goal & { id: string }
+          startDate: toDate(data.startDate),
+          targetDate: toDate(data.targetDate),
+          completedAt: toDate(data.completedAt),
+          createdAt: toDate(data.createdAt),
+          updatedAt: toDate(data.updatedAt),
+          deletedAt: toDate(data.deletedAt),
+        } as Goal
       })
+
+      // Client-side filtering and sorting to avoid composite index requirement
+      return data
+        .filter(goal => !goal.deletedAt)
+        .sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+          return dateB - dateA
+        })
     },
     enabled: !!auth.currentUser?.uid,
   })
@@ -50,18 +65,26 @@ export function useCreateGoal() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (goalData: Omit<Goal, 'id'>) => {
+    mutationFn: async (
+      goalData: Omit<Goal, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'deletedAt'>
+    ) => {
       const userId = auth.currentUser?.uid
       if (!userId) throw new Error('Not authenticated')
 
+      // Remove undefined values as Firestore doesn't support them
+      const cleanedData = Object.fromEntries(
+        Object.entries(goalData).filter(([, v]) => v !== undefined)
+      )
+
       const docRef = await addDoc(collection(db, 'goals'), {
-        ...goalData,
+        ...cleanedData,
         userId,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
+        deletedAt: null,
       })
 
-      await logActivity(userId, 'create', 'profile', docRef.id, {
+      await logActivity(userId, 'create', 'goal', docRef.id, {
         title: goalData.title,
         type: goalData.type,
       })
@@ -70,7 +93,6 @@ export function useCreateGoal() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] })
-      queryClient.invalidateQueries({ queryKey: ['user-stats'] })
     },
   })
 }
@@ -80,23 +102,29 @@ export function useUpdateGoal() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Goal> }) => {
-      const goalRef = doc(db, 'goals', id)
-      await updateDoc(goalRef, {
-        ...data,
-        updatedAt: serverTimestamp(),
-      })
-
       const userId = auth.currentUser?.uid
-      if (userId && data.status === 'completed') {
-        await logActivity(userId, 'update', 'profile', id, {
-          goalCompleted: true,
-          title: data.title,
+      if (!userId) throw new Error('Not authenticated')
+
+      // Remove undefined values
+      const cleanedData = Object.fromEntries(
+        Object.entries(data).filter(([, v]) => v !== undefined)
+      )
+
+      const formattedData = {
+        ...cleanedData,
+        updatedAt: serverTimestamp(),
+      }
+
+      await updateDoc(doc(db, 'goals', id), formattedData)
+
+      if (data.status === 'completed') {
+        await logActivity(userId, 'complete', 'goal', id, {
+          status: 'completed',
         })
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] })
-      queryClient.invalidateQueries({ queryKey: ['user-stats'] })
     },
   })
 }
@@ -106,16 +134,19 @@ export function useDeleteGoal() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      await deleteDoc(doc(db, 'goals', id))
-
       const userId = auth.currentUser?.uid
-      if (userId) {
-        await logActivity(userId, 'delete', 'profile', id)
-      }
+      if (!userId) throw new Error('Not authenticated')
+
+      // Soft delete: update deletedAt instead of deleting document
+      await updateDoc(doc(db, 'goals', id), {
+        deletedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      })
+
+      await logActivity(userId, 'delete', 'goal', id)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] })
-      queryClient.invalidateQueries({ queryKey: ['user-stats'] })
     },
   })
 }

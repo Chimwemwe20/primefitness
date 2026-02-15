@@ -8,7 +8,6 @@ import {
   getDoc,
   addDoc,
   updateDoc,
-  deleteDoc,
   serverTimestamp,
   orderBy,
 } from 'firebase/firestore'
@@ -30,17 +29,19 @@ export function useWorkoutSessions() {
       )
 
       const snapshot = await getDocs(q)
-      return snapshot.docs.map(doc => {
-        const data = doc.data()
-        return {
-          id: doc.id,
-          ...data,
-          startTime: data.startTime?.toDate() || new Date(),
-          endTime: data.endTime?.toDate(),
-          completedAt: data.completedAt?.toDate(),
-          createdAt: data.createdAt?.toDate(),
-        } as WorkoutSession & { id: string }
-      })
+      return snapshot.docs
+        .filter(d => !d.data().deletedAt) // filter out soft-deleted
+        .map(doc => {
+          const data = doc.data()
+          return {
+            id: doc.id,
+            ...data,
+            startTime: data.startTime?.toDate() || new Date(),
+            endTime: data.endTime?.toDate(),
+            completedAt: data.completedAt?.toDate(),
+            createdAt: data.createdAt?.toDate(),
+          } as WorkoutSession & { id: string }
+        })
     },
     enabled: !!auth.currentUser?.uid,
   })
@@ -54,6 +55,9 @@ export function useWorkoutSession(id: string) {
       if (!snapshot.exists()) return null
 
       const data = snapshot.data()
+      // Return null if soft-deleted
+      if (data.deletedAt) return null
+
       return {
         id: snapshot.id,
         ...data,
@@ -80,6 +84,7 @@ export function useCreateWorkoutSession() {
         userId,
         startTime: serverTimestamp(),
         createdAt: serverTimestamp(),
+        deletedAt: null,
       })
 
       await logActivity(userId, 'create', 'workout-plan', docRef.id, {
@@ -123,17 +128,21 @@ export function useUpdateWorkoutSession() {
   })
 }
 
+/** Soft delete: sets deletedAt instead of removing the document */
 export function useDeleteWorkoutSession() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (id: string) => {
-      await deleteDoc(doc(db, 'workout-sessions', id))
-
       const userId = auth.currentUser?.uid
-      if (userId) {
-        await logActivity(userId, 'delete', 'workout-plan', id)
-      }
+      if (!userId) throw new Error('Not authenticated')
+
+      await updateDoc(doc(db, 'workout-sessions', id), {
+        deletedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      })
+
+      await logActivity(userId, 'delete', 'workout-plan', id)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workout-sessions'] })
