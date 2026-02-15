@@ -198,15 +198,15 @@ export default function ExerciseManagement() {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-background">
       <div className="w-full px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4 sm:mb-6">
           <div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-neutral-100">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
               Exercise Management
             </h1>
-            <p className="text-sm sm:text-base text-neutral-400 mt-1">
+            <p className="text-sm sm:text-base text-muted-foreground mt-1">
               Create and manage global exercise library
             </p>
           </div>
@@ -215,7 +215,7 @@ export default function ExerciseManagement() {
               onClick={handleSeedDefaults}
               disabled={isSeeding}
               variant="outline"
-              className="border-neutral-600 text-neutral-300 hover:bg-neutral-800 h-11"
+              className="border-border text-muted-foreground hover:bg-muted h-11"
             >
               {isSeeding ? (
                 <>
@@ -240,12 +240,12 @@ export default function ExerciseManagement() {
         </div>
 
         {/* Filters */}
-        <Card className="bg-neutral-900 border-neutral-800 p-4 sm:p-6 mb-4 sm:mb-6">
+        <Card className="bg-card border-border p-4 sm:p-6 mb-4 sm:mb-6">
           <div className="flex flex-col gap-3 sm:gap-4">
             {/* Search */}
             <div className="relative">
               <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                 size={18}
               />
               <Input
@@ -255,7 +255,7 @@ export default function ExerciseManagement() {
                   setSearchQuery(e.target.value)
                   setCurrentPage(1)
                 }}
-                className="pl-10 bg-neutral-800 border-neutral-700 h-11 text-base"
+                className="pl-10 bg-background border-input h-11 text-base"
               />
             </div>
 
@@ -263,7 +263,7 @@ export default function ExerciseManagement() {
             <div className="grid grid-cols-2 gap-3">
               <div className="relative">
                 <Filter
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
                   size={16}
                 />
                 <select
@@ -272,7 +272,7 @@ export default function ExerciseManagement() {
                     setCategoryFilter(e.target.value)
                     setCurrentPage(1)
                   }}
-                  className="w-full h-10 pl-9 pr-3 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-100 text-sm appearance-none cursor-pointer"
+                  className="w-full h-10 pl-9 pr-3 bg-background border border-input rounded-lg text-foreground text-sm appearance-none cursor-pointer"
                 >
                   <option value="all">All Categories</option>
                   <option value="strength">Strength</option>
@@ -285,7 +285,7 @@ export default function ExerciseManagement() {
 
               <div className="relative">
                 <Filter
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
                   size={16}
                 />
                 <select
@@ -294,7 +294,7 @@ export default function ExerciseManagement() {
                     setDifficultyFilter(e.target.value)
                     setCurrentPage(1)
                   }}
-                  className="w-full h-10 pl-9 pr-3 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-100 text-sm appearance-none cursor-pointer"
+                  className="w-full h-10 pl-9 pr-3 bg-background border border-input rounded-lg text-foreground text-sm appearance-none cursor-pointer"
                 >
                   <option value="all">All Levels</option>
                   <option value="beginner">Beginner</option>
@@ -306,7 +306,7 @@ export default function ExerciseManagement() {
           </div>
 
           {/* Results count */}
-          <div className="mt-3 text-xs sm:text-sm text-neutral-500">
+          <div className="mt-3 text-xs sm:text-sm text-muted-foreground">
             Showing {paginatedExercises?.length || 0} of {filteredExercises?.length || 0} exercises
           </div>
         </Card>
@@ -316,13 +316,13 @@ export default function ExerciseManagement() {
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-3"></div>
-              <p className="text-neutral-500">Loading exercises...</p>
+              <p className="text-muted-foreground">Loading exercises...</p>
             </div>
           </div>
         ) : paginatedExercises?.length === 0 ? (
-          <Card className="bg-neutral-900 border-neutral-800 p-12 text-center">
-            <Dumbbell className="h-16 w-16 text-neutral-700 mx-auto mb-4" />
-            <p className="text-neutral-500 mb-4">No exercises found</p>
+          <Card className="bg-card border-border p-12 text-center">
+            <Dumbbell className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground mb-4">No exercises found</p>
             <Button onClick={() => handleOpenModal()} className="bg-blue-600">
               <Plus size={16} className="mr-2" />
               Create First Exercise
@@ -333,7 +333,7 @@ export default function ExerciseManagement() {
             {paginatedExercises?.map(exercise => (
               <Card
                 key={exercise.id}
-                className="bg-neutral-900 border-neutral-800 p-4 hover:border-neutral-700 transition-all group"
+                className="bg-card border-border p-4 hover:border-input transition-all group"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="p-2 rounded-lg bg-blue-500/20 flex-shrink-0">
@@ -359,13 +359,11 @@ export default function ExerciseManagement() {
                   </div>
                 </div>
 
-                <h3 className="font-semibold text-neutral-100 mb-2 line-clamp-2">
-                  {exercise.name}
-                </h3>
+                <h3 className="font-semibold text-foreground mb-2 line-clamp-2">{exercise.name}</h3>
 
                 <div className="space-y-2 mb-3">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="px-2 py-0.5 rounded text-xs bg-neutral-800 text-neutral-400 capitalize">
+                    <span className="px-2 py-0.5 rounded text-xs bg-muted text-muted-foreground capitalize">
                       {exercise.category}
                     </span>
                     <span
@@ -379,13 +377,13 @@ export default function ExerciseManagement() {
                     {exercise.muscleGroups.slice(0, 3).map(m => (
                       <span
                         key={m}
-                        className="px-1.5 py-0.5 rounded text-[10px] bg-neutral-800 text-neutral-500 capitalize"
+                        className="px-1.5 py-0.5 rounded text-[10px] bg-muted text-muted-foreground capitalize"
                       >
                         {m}
                       </span>
                     ))}
                     {exercise.muscleGroups.length > 3 && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-neutral-800 text-neutral-500">
+                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-muted text-muted-foreground">
                         +{exercise.muscleGroups.length - 3}
                       </span>
                     )}
@@ -393,7 +391,7 @@ export default function ExerciseManagement() {
                 </div>
 
                 {exercise.description && (
-                  <p className="text-xs text-neutral-500 line-clamp-2 mb-3">
+                  <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
                     {exercise.description}
                   </p>
                 )}
@@ -417,7 +415,7 @@ export default function ExerciseManagement() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="mt-6 flex items-center justify-between">
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-muted-foreground">
               Page {currentPage} of {totalPages}
             </p>
             <div className="flex gap-2">
@@ -448,9 +446,9 @@ export default function ExerciseManagement() {
         {/* Create/Edit Modal - Mobile Optimized */}
         {isModalOpen && (
           <div className="fixed inset-0 bg-black/90 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-            <Card className="bg-neutral-900 border-neutral-800 w-full sm:max-w-2xl rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto">
+            <Card className="bg-card border-border w-full sm:max-w-2xl rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto">
               {/* Sticky Header */}
-              <div className="sticky top-0 bg-neutral-900 border-b border-neutral-800 px-4 sm:px-6 py-4 flex justify-between items-center z-10">
+              <div className="sticky top-0 bg-card border-b border-border px-4 sm:px-6 py-4 flex justify-between items-center z-10">
                 <h2 className="text-lg sm:text-xl font-bold">
                   {editingExercise ? 'Edit Exercise' : 'Add New Exercise'}
                 </h2>
@@ -467,7 +465,7 @@ export default function ExerciseManagement() {
               <form onSubmit={handleSubmit} className="px-4 sm:px-6 pb-6 space-y-4 sm:space-y-5">
                 {/* Exercise Name */}
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-neutral-400">
+                  <label className="block text-sm font-medium mb-2 text-muted-foreground">
                     Exercise Name *
                   </label>
                   <Input
@@ -476,7 +474,7 @@ export default function ExerciseManagement() {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
-                    className="bg-neutral-800 border-neutral-700 h-11 text-base"
+                    className="bg-background border-input h-11 text-base"
                     placeholder="e.g. Bench Press"
                   />
                 </div>
@@ -484,11 +482,11 @@ export default function ExerciseManagement() {
                 {/* Category & Difficulty */}
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-neutral-400">
+                    <label className="block text-sm font-medium mb-2 text-muted-foreground">
                       Category *
                     </label>
                     <select
-                      className="w-full h-11 bg-neutral-800 border-neutral-700 rounded-lg p-2 text-base text-neutral-100"
+                      className="w-full h-11 bg-background border-input rounded-lg p-2 text-base text-foreground"
                       value={formData.category}
                       onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                         setFormData({
@@ -505,11 +503,11 @@ export default function ExerciseManagement() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-neutral-400">
+                    <label className="block text-sm font-medium mb-2 text-muted-foreground">
                       Difficulty
                     </label>
                     <select
-                      className="w-full h-11 bg-neutral-800 border-neutral-700 rounded-lg p-2 text-base text-neutral-100"
+                      className="w-full h-11 bg-background border-input rounded-lg p-2 text-base text-foreground"
                       value={formData.difficulty}
                       onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                         setFormData({
@@ -529,12 +527,12 @@ export default function ExerciseManagement() {
 
                 {/* Description */}
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-neutral-400">
+                  <label className="block text-sm font-medium mb-2 text-muted-foreground">
                     Description
                   </label>
                   <textarea
                     rows={3}
-                    className="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-3 text-base text-neutral-100 placeholder:text-neutral-500"
+                    className="w-full bg-background border border-input rounded-lg p-3 text-base text-foreground placeholder:text-muted-foreground"
                     value={formData.description || ''}
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                       setFormData({ ...formData, description: e.target.value })
@@ -545,7 +543,7 @@ export default function ExerciseManagement() {
 
                 {/* Muscle Groups */}
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-neutral-400">
+                  <label className="block text-sm font-medium mb-2 text-muted-foreground">
                     Muscle Groups
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -566,7 +564,7 @@ export default function ExerciseManagement() {
                         className={`px-3 py-2 rounded-lg text-sm border transition-all active:scale-95 ${
                           formData.muscleGroups?.includes(m as Exercise['muscleGroups'][number])
                             ? 'bg-blue-600 border-blue-600 text-white'
-                            : 'bg-transparent border-neutral-700 text-neutral-400 hover:border-neutral-500'
+                            : 'bg-transparent border-input text-muted-foreground hover:border-foreground'
                         }`}
                       >
                         {m.charAt(0).toUpperCase() + m.slice(1)}
@@ -577,7 +575,7 @@ export default function ExerciseManagement() {
 
                 {/* Equipment */}
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-neutral-400">
+                  <label className="block text-sm font-medium mb-2 text-muted-foreground">
                     Equipment
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -599,7 +597,7 @@ export default function ExerciseManagement() {
                             e as NonNullable<Exercise['equipment']>[number]
                           )
                             ? 'bg-blue-600 border-blue-600 text-white'
-                            : 'bg-transparent border-neutral-700 text-neutral-400 hover:border-neutral-500'
+                            : 'bg-transparent border-input text-muted-foreground hover:border-foreground'
                         }`}
                       >
                         {e.replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase())}
@@ -610,7 +608,7 @@ export default function ExerciseManagement() {
 
                 {/* Video URL */}
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-neutral-400">
+                  <label className="block text-sm font-medium mb-2 text-muted-foreground">
                     Video URL (optional)
                   </label>
                   <Input
@@ -625,7 +623,7 @@ export default function ExerciseManagement() {
                 </div>
 
                 {/* Submit Button */}
-                <div className="flex gap-3 pt-4 border-t border-neutral-800">
+                <div className="flex gap-3 pt-4 border-t border-border">
                   <Button
                     type="button"
                     variant="ghost"
