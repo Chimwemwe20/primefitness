@@ -80,8 +80,8 @@ function ToastItem({ toast, onRemove }: { toast: ToastType; onRemove: (id: strin
         'shadow-xl shadow-black/30 backdrop-blur-sm',
         'transition-all ease-out',
         isExiting
-          ? 'opacity-0 translate-x-8 scale-95 duration-300'
-          : 'opacity-100 translate-x-0 scale-100 duration-500 animate-in slide-in-from-right-full fade-in',
+          ? 'opacity-0 -translate-y-4 scale-95 duration-300'
+          : 'opacity-100 translate-y-0 scale-100 duration-500 animate-in slide-in-from-top-4 fade-in',
         variant.container
       )}
       role="alert"
@@ -128,7 +128,7 @@ export function ToastContainer() {
   if (toasts.length === 0) return null
 
   return (
-    <div className="fixed top-0 right-0 z-[100] flex flex-col items-end gap-3 p-6 pointer-events-none">
+    <div className="fixed top-0 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-3 p-6 pointer-events-none">
       {toasts.map(toast => (
         <div key={toast.id} className="pointer-events-auto">
           <ToastItem toast={toast} onRemove={removeToast} />
