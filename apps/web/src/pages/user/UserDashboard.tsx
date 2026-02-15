@@ -189,9 +189,9 @@ export default function UserDashboard() {
                 <p className="text-muted-foreground mb-4 text-sm sm:text-base">
                   No workouts logged yet
                 </p>
-                <Link to="/workouts/log">
+                <Link to="/workouts">
                   <Button className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 h-12 sm:h-10">
-                    Log Your First Workout
+                    Start Your Workout Journey
                   </Button>
                 </Link>
               </div>

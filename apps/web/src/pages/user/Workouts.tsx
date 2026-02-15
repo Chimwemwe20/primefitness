@@ -160,29 +160,31 @@ export default function Workouts() {
   return (
     <div>
       {/* Header */}
-      <div className="flex justify-between items-start mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold mb-2 text-neutral-100">Workouts</h1>
           <p className="text-neutral-400">Choose a workout or create your own</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2 w-full sm:w-auto">
           <Button
             onClick={() => setCreateDialogOpen(true)}
             variant="outline"
-            className="border-neutral-700 text-neutral-300 hover:text-neutral-100"
+            className="border-neutral-700 text-neutral-300 hover:text-neutral-100 flex-1 sm:flex-initial"
           >
-            <Plus size={20} className="mr-2" />
-            Create Plan
+            <Plus size={20} className="sm:mr-2" />
+            <span className="hidden sm:inline">Create Plan</span>
+            <span className="sm:hidden">Create</span>
           </Button>
           <Button
             onClick={() => {
               setStartSearch('')
               setStartDialogOpen(true)
             }}
-            className="bg-blue-500 hover:bg-blue-600 text-white"
+            className="bg-blue-500 hover:bg-blue-600 text-white flex-1 sm:flex-initial"
           >
-            <Play size={20} className="mr-2" />
-            Start Workout
+            <Play size={20} className="sm:mr-2" />
+            <span className="hidden sm:inline">Start Workout</span>
+            <span className="sm:hidden">Start</span>
           </Button>
         </div>
       </div>
