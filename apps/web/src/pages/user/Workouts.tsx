@@ -5,6 +5,7 @@ import {
   useCreateWorkoutPlan,
   usePublicWorkoutTemplates,
 } from '../../hooks/useWorkoutPlans'
+import { auth } from '../../lib/firebase'
 import { Button } from '@repo/ui/Button'
 import { Card } from '@repo/ui/Card'
 import { Input } from '@repo/ui/Input'
@@ -23,11 +24,14 @@ const emptyExercise = (): WorkoutExercise => ({
 })
 
 export default function Workouts() {
-  const { data: userPlans, isLoading: plansLoading } = useWorkoutPlans()
+  const { data: allPlans, isLoading: plansLoading } = useWorkoutPlans()
   const { data: templates, isLoading: templatesLoading } = usePublicWorkoutTemplates()
   const deleteWorkoutPlan = useDeleteWorkoutPlan()
   const createWorkoutPlan = useCreateWorkoutPlan()
   const toast = useToast()
+
+  // Filter out deleted plans for display
+  const userPlans = allPlans?.filter(p => p.status === 'active')
 
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -65,6 +69,17 @@ export default function Workouts() {
     ...(userPlans ?? []).map(p => ({ ...p, kind: 'plan' as const })),
     ...(templates ?? []).map(t => ({ ...t, kind: 'template' as const })),
   ].filter(o => o.title.toLowerCase().includes(startSearch.toLowerCase()))
+
+  // ── Helpers ──
+
+  /** Check if a plan title already exists among the current user's active plans */
+  const isDuplicateTitle = (title: string): boolean => {
+    const userId = auth.currentUser?.uid
+    if (!userId || !userPlans) return false
+    return userPlans.some(
+      p => p.userId === userId && p.title.trim().toLowerCase() === title.trim().toLowerCase()
+    )
+  }
 
   // ── Form helpers ──
 
@@ -108,6 +123,10 @@ export default function Workouts() {
       toast.error('Please enter a plan title.')
       return
     }
+    if (isDuplicateTitle(newTitle)) {
+      toast.error('A workout plan with this title already exists.')
+      return
+    }
     if (validExercises.length === 0) {
       toast.error('Add at least one exercise with a name.')
       return
@@ -123,8 +142,9 @@ export default function Workouts() {
       resetCreateForm()
       setCreatedPlanId(result.id)
       setStartNowDialogOpen(true)
-    } catch {
-      toast.error('Failed to create workout plan.')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to create workout plan.'
+      toast.error(message)
     }
   }
 
@@ -135,6 +155,12 @@ export default function Workouts() {
 
   const handleSaveTemplateAsPlan = async () => {
     if (!selectedTemplate) return
+
+    if (isDuplicateTitle(selectedTemplate.title)) {
+      toast.error('A workout plan with this title already exists.')
+      return
+    }
+
     try {
       const result = await createWorkoutPlan.mutateAsync({
         title: selectedTemplate.title,
@@ -146,8 +172,9 @@ export default function Workouts() {
       setSelectedTemplate(null)
       setCreatedPlanId(result.id)
       setStartNowDialogOpen(true)
-    } catch {
-      toast.error('Failed to save template as plan.')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to save template as plan.'
+      toast.error(message)
     }
   }
 
@@ -301,7 +328,7 @@ export default function Workouts() {
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         title="Delete Workout Plan"
-        description="Are you sure you want to delete this workout plan? It can be recovered later if needed."
+        description="Are you sure you want to delete this workout plan? You'll be able to create a new plan with the same name later."
         confirmText="Delete"
         cancelText="Cancel"
         onConfirm={handleDeleteConfirm}

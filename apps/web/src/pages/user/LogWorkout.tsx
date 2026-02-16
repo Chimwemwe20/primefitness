@@ -19,6 +19,7 @@ import {
   Play,
   SkipForward,
   RotateCcw,
+  Loader2,
 } from 'lucide-react'
 import type { Exercise } from '@repo/shared/schemas'
 import type { WorkoutPlan } from '@repo/shared/schemas'
@@ -84,6 +85,7 @@ export default function LogWorkout() {
   const [showExercisePicker, setShowExercisePicker] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [isLoadingPrefill, setIsLoadingPrefill] = useState(Boolean(templateId || planId))
 
   // ── Workout timer state ──────────────────────────────────────────────
   const [startTime, setStartTime] = useState<Date | null>(null)
@@ -112,6 +114,7 @@ export default function LogWorkout() {
         hasPrefilledRef.current = true
         setWorkoutTitle(template.title)
         setWorkoutExercises(planToLogExercises(template))
+        setIsLoadingPrefill(false)
         success(`Loaded template: ${template.title}`)
       }
     } else if (planId && userPlans?.length) {
@@ -120,8 +123,12 @@ export default function LogWorkout() {
         hasPrefilledRef.current = true
         setWorkoutTitle(plan.title)
         setWorkoutExercises(planToLogExercises(plan))
+        setIsLoadingPrefill(false)
         success(`Loaded plan: ${plan.title}`)
       }
+    } else if (!templateId && !planId) {
+      // No template or plan to load
+      setIsLoadingPrefill(false)
     }
   }, [templateId, planId, templates, userPlans, success])
 
@@ -328,6 +335,18 @@ export default function LogWorkout() {
   const filteredExercises = exercises?.filter((ex: Exercise & { id: string }) =>
     ex.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  // ── Loading state ────────────────────────────────────────────────────
+  if (isLoadingPrefill) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-blue-500 mx-auto mb-4" />
+          <p className="text-neutral-400">Loading workout...</p>
+        </div>
+      </div>
+    )
+  }
 
   // ── Render ───────────────────────────────────────────────────────────
   return (
