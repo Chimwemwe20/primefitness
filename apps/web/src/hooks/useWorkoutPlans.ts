@@ -67,6 +67,19 @@ async function safeLogActivity(...args: Parameters<typeof logActivity>) {
   }
 }
 
+/** Check if an active plan with the same title already exists for the given user */
+async function checkDuplicateTitle(userId: string, title: string): Promise<boolean> {
+  if (!userId) return false
+  const snapshot = await getDocs(
+    query(
+      collection(db, 'workout-plans'),
+      where('userId', '==', userId),
+      where('status', '==', 'active')
+    )
+  )
+  return snapshot.docs.some(d => d.data().title.trim().toLowerCase() === title.trim().toLowerCase())
+}
+
 // ── Query keys (centralised for easy invalidation) ─────────
 
 const planKeys = {
@@ -152,6 +165,12 @@ export function useCreateWorkoutPlan() {
       if (!planData.title.trim()) throw new Error('Plan must have a title')
       if (exercises.length === 0) throw new Error('Add at least one exercise')
 
+      // Check for duplicate title among active plans in Firestore
+      const isDuplicate = await checkDuplicateTitle(userId, planData.title)
+      if (isDuplicate) {
+        throw new Error('A workout plan with this title already exists.')
+      }
+
       const payload = stripUndefined({
         title: planData.title.trim(),
         description: planData.description?.trim() || '',
@@ -234,6 +253,24 @@ export function useUpdateWorkoutPlan() {
     mutationFn: async ({ id, data }: { id: string; data: Partial<WorkoutPlan> }) => {
       const userId = auth.currentUser?.uid
       if (!userId) throw new Error('Not authenticated')
+
+      // If title is being updated, check for duplicates (excluding the current plan)
+      if (data.title) {
+        const snapshot = await getDocs(
+          query(
+            collection(db, 'workout-plans'),
+            where('userId', '==', userId),
+            where('status', '==', 'active')
+          )
+        )
+        const isDuplicate = snapshot.docs.some(
+          d =>
+            d.id !== id && d.data().title.trim().toLowerCase() === data.title!.trim().toLowerCase()
+        )
+        if (isDuplicate) {
+          throw new Error('A workout plan with this title already exists.')
+        }
+      }
 
       const sanitized = stripUndefined({
         ...data,
